@@ -23,6 +23,9 @@ public:
 	explicit FeedbackNet(const string& param_file) : Net<Dtype>(param_file);
 	virtual ~FeedbackNet(){}
 
+	void UpdateEqFilter();
+
+
 
 protected:
 	//Design data member

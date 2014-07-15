@@ -14,6 +14,9 @@
 
 #include "caffe/caffe.hpp"
 
+//For debug, make DEBUG = 1, otherwise, DEBUG = 0
+#define DEBUG 1
+
 using namespace caffe;  // NOLINT(build/namespaces)
 
 int main(int argc, char** argv) {
@@ -41,14 +44,35 @@ int main(int argc, char** argv) {
   Net<float> caffe_test_net(argv[1]);
   caffe_test_net.CopyTrainedLayersFrom(argv[2]);
 
+  if( DEBUG )
+  {
+	  LOG(ERROR)<<"For Debug: Print all layer names";
+	  for (int j = 0; j < caffe_test_net.blob_names().size(); j++)
+	  {
+		  string name = caffe_test_net.blob_names()[j];
+		  LOG(ERROR)<<name;
+	  }
+  }
+
   int total_iter = atoi(argv[3]);
   LOG(ERROR) << "Running " << total_iter << " iterations.";
 
   double test_accuracy = 0;
   for (int i = 0; i < total_iter; ++i) {
-    const vector<Blob<float>*>& result = caffe_test_net.ForwardPrefilled();
-    test_accuracy += result[0]->cpu_data()[0];
-    LOG(ERROR) << "Batch " << i << ", accuracy: " << result[0]->cpu_data()[0];
+	  LOG(ERROR) << "Processing Batch: "<<i;
+	  const vector<Blob<float>*>& result = caffe_test_net.ForwardPrefilled();
+
+	  if (DEBUG)
+	  {
+		  LOG(ERROR)<<"Result size: "<<result.size();
+		  for (int j = 0; j<result.size(); j++)
+			  LOG(ERROR)<<"Output Layer "<<j<<" - "<<result[j]->width()<<":"<<result[j]->height();
+		  LOG(ERROR)<<"Forward Complete";
+	  }
+
+
+	  test_accuracy += result[0]->cpu_data()[0];
+	  LOG(ERROR) << "Batch " << i << ", accuracy: " << result[0]->cpu_data()[0];
   }
   test_accuracy /= total_iter;
   LOG(ERROR) << "Test accuracy: " << test_accuracy;
