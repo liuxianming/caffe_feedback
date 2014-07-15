@@ -12,6 +12,7 @@
 #include "boost/scoped_ptr.hpp"
 #include "hdf5.h"
 
+#include "caffe/feedback_layer.hpp"
 #include "caffe/blob.hpp"
 #include "caffe/common.hpp"
 #include "caffe/layer.hpp"
@@ -26,6 +27,7 @@ namespace caffe {
   An interface for layers that take one blob as input (x),
   and produce one blob as output (y).
 */
+
 template <typename Dtype>
 class NeuronLayer : public Layer<Dtype> {
  public:
@@ -33,6 +35,18 @@ class NeuronLayer : public Layer<Dtype> {
      : Layer<Dtype>(param) {}
   virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
+};
+
+
+template <typename Dtype>
+class FeedbackNeuronLayer : public FeedbackLayer<Dtype> {
+ public:
+  explicit FeedbackNeuronLayer(const LayerParameter& param)
+     : FeedbackLayer<Dtype>(param) {}
+  virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual void UpdateEqFilter(const vector<Blob<Dtype>*>& top_filter,
+  			const vector<Blob<Dtype>*>& input) = 0;
 };
 
 /* BNLLLayer
@@ -133,10 +147,10 @@ class PowerLayer : public NeuronLayer<Dtype> {
   y' = 1 if x > 0
 */
 template <typename Dtype>
-class ReLULayer : public NeuronLayer<Dtype> {
+class ReLULayer : public FeedbackNeuronLayer<Dtype> {
  public:
   explicit ReLULayer(const LayerParameter& param)
-      : NeuronLayer<Dtype>(param) {}
+      : FeedbackNeuronLayer<Dtype>(param) {}
 
  protected:
   virtual Dtype Forward_cpu(const vector<Blob<Dtype>*>& bottom,
@@ -148,6 +162,9 @@ class ReLULayer : public NeuronLayer<Dtype> {
       const bool propagate_down, vector<Blob<Dtype>*>* bottom);
   virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
       const bool propagate_down, vector<Blob<Dtype>*>* bottom);
+
+  virtual void UpdateEqFilter(const vector<Blob<Dtype>*>& top_filter,
+  			const vector<Blob<Dtype>*>& input);
 };
 
 /* SigmoidLayer

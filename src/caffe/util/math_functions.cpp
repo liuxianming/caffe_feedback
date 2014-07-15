@@ -104,6 +104,18 @@ template <>
 void caffe_axpy<float>(const int N, const float alpha, const float* X,
     float* Y) { cblas_saxpy(N, alpha, X, 1, Y, 1); }
 
+// Calling cblas functions: return y=alpha * x + y
+/* For cblas_daxpy(const int N,
+ *                 const double alpha,
+ *                 const double *X,
+ *                 const int incX,
+ *                 double *Y,
+ *                 const int incY)
+ * N - number of elements in the vectors
+ * alpha - scaling factors for the values in X
+ * X, Y: inputs
+ * incX, incY: strides within X and Y
+ */
 template <>
 void caffe_axpy<double>(const int N, const double alpha, const double* X,
     double* Y) { cblas_daxpy(N, alpha, X, 1, Y, 1); }

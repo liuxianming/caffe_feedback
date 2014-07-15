@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "caffe/layer.hpp"
-#include "caffe/feedback_layer.hpp"
 #include "caffe/vision_layers.hpp"
 #include "caffe/util/math_functions.hpp"
 
@@ -45,9 +44,10 @@ void PoolingLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
       pooled_width_);
   }
 
-  shared_ptr<Blob<Dtype> > pooling_mask(
-		  new Blob<Dtype>(bottom[0]->num(), this->channels_, this->pooled_height_, this->pooled_width_));
-  this->blobs_.push_back(pooling_mask);
+  if (this->layer_param_.pooling_param().pool() == PoolingParameter_PoolMethod_MAX)
+  {
+	  pooling_mask_(new Blob<int>(bottom[0]->num(), channel_, pooled_height, pooled_width));
+  }
 }
 
 // TODO(Yangqing): Is there a faster way to do pooling in the channel-first
@@ -57,7 +57,7 @@ Dtype PoolingLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top) {
   const Dtype* bottom_data = bottom[0]->cpu_data();
   Dtype* top_data = (*top)[0]->mutable_cpu_data();
-  Dtype* mask_data = this->blobs_[0]->mutable_cpu_data();
+  int* mask_data = this->pooling_mask_->mutable_cpu_data();
   // Different pooling methods. We explicitly do the switch outside the for
   // loop to save time, although this results in more codes.
   int top_count = (*top)[0]->count();
@@ -84,7 +84,7 @@ Dtype PoolingLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
             					  bottom_data[h * width_ + w]);
             	  if (top_data[ph * pooled_width_ + pw] == bottom_data[h * width_ + w])
             	  {
-            		  mask_data[ph * pooled_width_ + pw] = static_cast<Dtype> (h * width_ + w);
+            		  mask_data[ph * pooled_width_ + pw] = h * width_ + w;
             	  }
               }
             }
@@ -94,7 +94,7 @@ Dtype PoolingLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
         // Change to the next channel, the offset is got by calling blob.offset(n, c, w, h) function
         bottom_data += bottom[0]->offset(0, 1);
         top_data += (*top)[0]->offset(0, 1);
-        mask_data += this->blobs_[0]->offset(0,1);
+        mask_data += pooling_mask_->offset(0,1);
       }
     }
     break;
@@ -227,41 +227,14 @@ template <typename Dtype>
 void PoolingLayer<Dtype>::UpdateEqFilter(const vector<Blob<Dtype>*>& top_filter,
 		  const vector<Blob<Dtype>*>& input)
 {
-	// Initializing the eq_filter_:
-	// The size of eq_filter is
-	//    Number_Of_Input_Sources (Vector Size) * Mini_Batch_Size * Ouput_channel * Output_Size * Input_Size(Count)
-	//    If the output is an matrix, the outputsize = width * height
-	//    For pooling layer, it only has one input source, and one output source
-	int M_ = input[0]->num();
-	int K_ = input[0]->count() / input[0]->num();
-	int N_ = this->pooled_height_ * this->pooled_width_;
-	int top_output_num = top_filter[0]->height();
-	int top_output_channel = top_filter[0]->channels();
-
-	shared_ptr<Blob<Dtype> > eq_filter(new Blob<Dtype>(M_, top_output_channel, top_output_num, K_));
-	this->eq_filter_.push_back(eq_filter);
-
-	//Calculation of eq_filter_
-	const Dtype* top_filter_data = top_filter[0]->mutable_cpu_data();
-	const Dtype* mask_data = this->blobs_[0]->mutable_cpu_data();
-	Dtype* eq_filter_data = this->eq_filter_[0]->mutable_cpu_data();
-
-	//Initialize as all 0
-	memset(eq_filter_data, 0, sizeof(Dtype) * this->eq_filter_[0]->count());
-
-	for (int n = 0; n<input[0]->num(); n++){
-		for (int c = 0; c< this->blobs_[0]->channels(); c++)
-		{
-			for (int offset = 0; offset < this->blobs_[0]->height() * this->blobs_[0]->width(); ++offset){
-				//Need to implement in detail
-				int mask_offset = static_cast<int>(*(mask_data + offset));
-				*(eq_filter_data + offset) = *(top_filter_data+offset);
-			}
-			//adjust the mask_data ptr to the next channel
-			mask_data += this->blobs_[0]->offset(0,1);
-			eq_filter_data += this->eq_filter_[0]->offset(0,1);
-		}	//for each channel
-	}	//for each image in mini-batch
+	//Calculate the eq_filter_ for current layers
+	//First initialize the eq_filter:
+	//Size = ???
+	eq_filters_(new Blob<Dtype>(
+			input[0]->num(),
+			input[0]->channels(),
+			top_filter[0]->height(),
+			top_filter[0]->width()));
 }
 
 INSTANTIATE_CLASS(PoolingLayer);

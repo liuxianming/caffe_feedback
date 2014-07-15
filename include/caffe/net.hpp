@@ -75,6 +75,7 @@ class Net {
   inline const vector<shared_ptr<Blob<Dtype> > >& blobs() { return blobs_; }
   // returns the layers
   inline const vector<shared_ptr<Layer<Dtype> > >& layers() { return layers_; }
+
   // returns the bottom and top vecs for each layer - usually you won't need
   // this unless you do per-layer checks such as gradients.
   inline vector<vector<Blob<Dtype>*> >& bottom_vecs() { return bottom_vecs_; }
@@ -111,10 +112,12 @@ class Net {
   vector<bool> layer_need_backward_;
   // blobs stores the blobs that store intermediate results between the
   // layers.
+  // Only the layers which have output can produce blobs
   vector<shared_ptr<Blob<Dtype> > > blobs_;
   vector<string> blob_names_;
   map<string, int> blob_names_index_;
   vector<bool> blob_need_backward_;
+
   // bottom_vecs stores the vectors containing the input for each layer.
   // They don't actually host the blobs (blobs_ does), so we simply store
   // pointers.
@@ -129,9 +132,12 @@ class Net {
   vector<Blob<Dtype>*> net_input_blobs_;
   vector<Blob<Dtype>*> net_output_blobs_;
   string name_;
+
+  // Both the params_ and params_lr are sequentially stored: all the params along the network are stored in the vectors
   // The parameters in the network.
   vector<shared_ptr<Blob<Dtype> > > params_;
   // the learning rate multipliers
+  // Actual learning rate = base_lr * lr_multipliers
   vector<float> params_lr_;
   // the weight decay multipliers
   vector<float> params_weight_decay_;

@@ -21,6 +21,10 @@ class Layer {
   explicit Layer(const LayerParameter& param)
     : layer_param_(param) {
       // The only thing we do is to copy blobs if there are any.
+
+	  //for debug
+	  LOG(ERROR)<<"Blob size: "<<layer_param_.blobs_size();
+
       if (layer_param_.blobs_size() > 0) {
         blobs_.resize(layer_param_.blobs_size());
         for (int i = 0; i < layer_param_.blobs_size(); ++i) {
@@ -47,6 +51,8 @@ class Layer {
   vector<shared_ptr<Blob<Dtype> > >& blobs() {
     return blobs_;
   }
+
+
 
   // Returns the layer parameter
   const LayerParameter& layer_param() { return layer_param_; }

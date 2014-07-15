@@ -84,6 +84,10 @@ class Blob {
   void ShareDiff(const Blob& other);
 
  protected:
+  /*
+   * num_: number of images in one mini-batch
+   * channels_: the number of output in previous convolutional layer
+   */
   shared_ptr<SyncedMemory> data_;
   shared_ptr<SyncedMemory> diff_;
   int num_;

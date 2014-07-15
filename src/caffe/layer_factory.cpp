@@ -6,6 +6,7 @@
 #include <string>
 
 #include "caffe/layer.hpp"
+#include "caffe/feedback_layer.hpp"
 #include "caffe/vision_layers.hpp"
 #include "caffe/proto/caffe.pb.h"
 
@@ -82,6 +83,7 @@ Layer<Dtype>* GetLayer(const LayerParameter& param) {
     return new WindowDataLayer<Dtype>(param);
   case LayerParameter_LayerType_NONE:
     LOG(FATAL) << "Layer " << name << " has unspecified type.";
+    break;
   default:
     LOG(FATAL) << "Layer " << name << " has unknown type " << type;
   }

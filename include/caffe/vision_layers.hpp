@@ -10,6 +10,7 @@
 #include "caffe/blob.hpp"
 #include "caffe/common.hpp"
 #include "caffe/layer.hpp"
+#include "caffe/feedback_layer.hpp"
 #include "caffe/neuron_layers.hpp"
 #include "caffe/loss_layers.hpp"
 #include "caffe/data_layers.hpp"
@@ -52,14 +53,47 @@ class ConcatLayer : public Layer<Dtype> {
 /* ConvolutionLayer
 */
 template <typename Dtype>
-class ConvolutionLayer : public Layer<Dtype> {
+class ConvolutionLayer : public FeedbackLayer<Dtype> {
  public:
   explicit ConvolutionLayer(const LayerParameter& param)
-      : Layer<Dtype>(param) {}
+      : FeedbackLayer<Dtype>(param) {}
   virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
 
  protected:
+  /*
+   * Added by Xianming Liu, July, 2014
+   */
+  void filter_transpose(Dtype* filter,
+		  int output_num,
+		  int channels,
+		  int kernel_size,
+		  Dtype* t_filter);
+
+  void convolution(Dtype* input,
+		  Dtype* filter,
+		  Dtype* output,
+		  int output_num,
+		  int channels,
+		  int height,
+		  int width,
+		  int kernel_size,
+		  int pad, int stride);
+
+  //Function to perform deconvolution:
+  //response: the response after convolution, a 3-dimensional matrix (in shape of Blob)
+  //filter: convolution filter, a 4-dimensional matrix (in shape of Blob)
+  //output: the deconvolution results, of the same size of input image, a 3-dimensional matrix
+  void deconvolution(Dtype* response,
+		  Dtype* filter,
+		  Dtype* output,
+		  int output_num,
+		  int output_height,
+		  int output_width,
+		  int channels,
+		  int kernel_size,
+		  int pad,
+		  int stride);
   virtual Dtype Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
   virtual Dtype Forward_gpu(const vector<Blob<Dtype>*>& bottom,
@@ -68,6 +102,9 @@ class ConvolutionLayer : public Layer<Dtype> {
       const bool propagate_down, vector<Blob<Dtype>*>* bottom);
   virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
       const bool propagate_down, vector<Blob<Dtype>*>* bottom);
+
+  virtual void UpdateEqFilter(const vector<Blob<Dtype>*>& top_filter,
+  		  const vector<Blob<Dtype>*>& input);
 
   int kernel_size_;
   int stride_;
@@ -159,10 +196,10 @@ class Im2colLayer : public Layer<Dtype> {
 /* InnerProductLayer
 */
 template <typename Dtype>
-class InnerProductLayer : public Layer<Dtype> {
+class InnerProductLayer : public FeedbackLayer<Dtype> {
  public:
   explicit InnerProductLayer(const LayerParameter& param)
-      : Layer<Dtype>(param) {}
+      : FeedbackLayer<Dtype>(param) {}
   virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
 
@@ -175,6 +212,9 @@ class InnerProductLayer : public Layer<Dtype> {
       const bool propagate_down, vector<Blob<Dtype>*>* bottom);
   virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
       const bool propagate_down, vector<Blob<Dtype>*>* bottom);
+
+  virtual void UpdateEqFilter(const vector<Blob<Dtype>*>& top_filter,
+  		  const vector<Blob<Dtype>*>& input);
 
   int M_;
   int K_;
@@ -290,12 +330,17 @@ class MemoryDataLayer : public Layer<Dtype> {
 };
 
 template <typename Dtype>
-class PoolingLayer : public Layer<Dtype> {
+class PoolingLayer : public FeedbackLayer<Dtype> {
  public:
   explicit PoolingLayer(const LayerParameter& param)
-      : Layer<Dtype>(param) {}
+      : FeedbackLayer<Dtype>(param) {}
   virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
+
+  //Get the max_pooling mask for each input image
+  inline shared_ptr<Blob<Dtype> >  GetMask(){
+	  return this->blobs_[0];
+  }
 
  protected:
   virtual Dtype Forward_cpu(const vector<Blob<Dtype>*>& bottom,
@@ -306,6 +351,8 @@ class PoolingLayer : public Layer<Dtype> {
       const bool propagate_down, vector<Blob<Dtype>*>* bottom);
   virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
       const bool propagate_down, vector<Blob<Dtype>*>* bottom);
+  virtual void UpdateEqFilter(const vector<Blob<Dtype>*>& top_filter,
+		  const vector<Blob<Dtype>*>& input);
 
   int kernel_size_;
   int stride_;
@@ -316,6 +363,8 @@ class PoolingLayer : public Layer<Dtype> {
   int pooled_height_;
   int pooled_width_;
   Blob<Dtype> rand_idx_;
+  //For pooling layer, using the variable blobs_ to store the pooling mask
+  //shared_ptr<Blob<Dtype> > pooling_mask_;
 };
 
 /* SoftmaxLayer

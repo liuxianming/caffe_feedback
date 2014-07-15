@@ -14,10 +14,12 @@ using std::min;
 namespace caffe {
 
 template <typename Dtype>
+//Add a shared_ptr mask_data to store the maximum position of max-pooling
 __global__ void MaxPoolForward(const int nthreads, const Dtype* bottom_data,
     const int num, const int channels, const int height,
     const int width, const int pooled_height, const int pooled_width,
-    const int kernel_size, const int stride, Dtype* top_data) {
+    const int kernel_size, const int stride, Dtype* top_data,
+    Dtype* mask_data) {
   CUDA_KERNEL_LOOP(index, nthreads) {
     int pw = index % pooled_width;
     int ph = (index / pooled_width) % pooled_height;
@@ -29,12 +31,16 @@ __global__ void MaxPoolForward(const int nthreads, const Dtype* bottom_data,
     int wend = min(wstart + kernel_size, width);
     Dtype maxval = -FLT_MAX;
     bottom_data += (n * channels + c) * height * width;
+    int offset = 0;
     for (int h = hstart; h < hend; ++h) {
       for (int w = wstart; w < wend; ++w) {
         maxval = max(maxval, bottom_data[h * width + w]);
+        if (maxval == bottom_data[h * width + w])
+        	offset = h*width + w;
       }
     }
     top_data[index] = maxval;
+    mask_data[index] = static_cast<Dtype> (offset);
   }
 }
 
@@ -145,13 +151,14 @@ Dtype PoolingLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
   const Dtype* bottom_data = bottom[0]->gpu_data();
   Dtype* top_data = (*top)[0]->mutable_gpu_data();
   int count = (*top)[0]->count();
+  Dtype* mask_data = this->blobs_[0]->mutable_gpu_data();
   switch (this->layer_param_.pooling_param().pool()) {
   case PoolingParameter_PoolMethod_MAX:
     // NOLINT_NEXT_LINE(whitespace/operators)
     MaxPoolForward<Dtype><<<CAFFE_GET_BLOCKS(count), CAFFE_CUDA_NUM_THREADS>>>(
         count, bottom_data, bottom[0]->num(), channels_,
         height_, width_, pooled_height_, pooled_width_, kernel_size_, stride_,
-        top_data);
+        top_data, mask_data);
     break;
   case PoolingParameter_PoolMethod_AVE:
     // NOLINT_NEXT_LINE(whitespace/operators)

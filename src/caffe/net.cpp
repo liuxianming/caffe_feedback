@@ -39,12 +39,15 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
   // Basically, build all the layers and set up its connections.
   name_ = param.name();
   map<string, int> blob_name_to_idx;
+  // The available_blobs is set to be empty because there is no output when initializing the network
   set<string> available_blobs;
   int num_layers = param.layers_size();
   CHECK_EQ(param.input_size() * 4, param.input_dim_size())
       << "Incorrect bottom blob dimension specifications.";
   size_t memory_used = 0;
+
   // set the input blobs
+  // This deals with if there are multiple inputs for the network
   for (int i = 0; i < param.input_size(); ++i) {
     const string& blob_name = param.input(i);
     shared_ptr<Blob<Dtype> > blob_pointer(
@@ -62,6 +65,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
     memory_used += blob_pointer->count();
   }
   DLOG(INFO) << "Memory required for Data" << memory_used*sizeof(Dtype);
+
   // For each layer, set up their input and output
   bottom_vecs_.resize(param.layers_size());
   top_vecs_.resize(param.layers_size());
@@ -74,7 +78,11 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
     layer_names_.push_back(layer_param.name());
     LOG(INFO) << "Creating Layer " << layer_param.name();
     bool need_backward = param.force_backward();
-    // Figure out this layer's input and output
+
+    /* --------Figure out this layer's input and output --------*/
+    // 1. Find the layer's input.
+    // For the data and label layer, there is no input
+    // Basically, the input is blobs, that is the output of a layer, instead of a layer
     for (int j = 0; j < layer_param.bottom_size(); ++j) {
       const string& blob_name = layer_param.bottom(j);
       const int blob_id = blob_name_to_idx[blob_name];
@@ -90,6 +98,8 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
       need_backward |= blob_need_backward_[blob_id];
       available_blobs.erase(blob_name);
     }
+
+    // 2. Find the layer's output
     for (int j = 0; j < layer_param.top_size(); ++j) {
       const string& blob_name = layer_param.top(j);
       // Check if we are doing in-place computation
@@ -119,9 +129,14 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
         top_id_vecs_[i].push_back(blob_names_.size() - 1);
       }
     }
+
     // After this layer is connected, set it up.
-    // LOG(INFO) << "Setting up " << layer_names_[i];
+    LOG(INFO) << "Setting up " << layer_names_[i];
+
+    //layer.Setup is a virtual function, needs to be implemented for each class
+    //This setup connects bottom and top blobs
     layers_[i]->SetUp(bottom_vecs_[i], &top_vecs_[i]);
+
     for (int topid = 0; topid < top_vecs_[i].size(); ++topid) {
       LOG(INFO) << "Top shape: " << top_vecs_[i][topid]->num() << " "
           << top_vecs_[i][topid]->channels() << " "
@@ -132,7 +147,9 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
         memory_used += top_vecs_[i][topid]->count();
     }
     DLOG(INFO) << "Memory  required for Data " << memory_used*sizeof(Dtype);
+    // layer_param is a protected data member of class layer
     int blobs_lr_size = layers_[i]->layer_param().blobs_lr_size();
+
     CHECK(blobs_lr_size == layers_[i]->blobs().size() || blobs_lr_size == 0)
         << "Incorrect blobs lr size: should be either 0 or the same as "
            "the number of the layer's parameter blobs.";
@@ -146,7 +163,9 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
       // learning rate to be 1. Thus we will need to perform backward.
       need_backward = true;
     }
+
     // Finally, set the backward flag
+    // Also, the backward flag is sequentially stored in blob_need_backward, along the network
     layer_need_backward_.push_back(need_backward);
     if (need_backward) {
       LOG(INFO) << layer_names_[i] << " needs backward computation.";
@@ -160,15 +179,17 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
   // In the end, all remaining blobs are considered output blobs.
   for (set<string>::iterator it = available_blobs.begin();
       it != available_blobs.end(); ++it) {
-    LOG(INFO) << "This network produces output " << *it;
-    net_output_blobs_.push_back(blobs_[blob_name_to_idx[*it]].get());
-    net_output_blob_indices_.push_back(blob_name_to_idx[*it]);
+	  LOG(INFO) << "This network produces output " << *it;
+	  net_output_blobs_.push_back(blobs_[blob_name_to_idx[*it]].get());
+	  net_output_blob_indices_.push_back(blob_name_to_idx[*it]);
   }
+
   for (size_t i = 0; i < blob_names_.size(); ++i) {
-    blob_names_index_[blob_names_[i]] = i;
+	  //LOG(INFO)<<blob_names_index_[blob_names_[i]] <<" vs. "<<i;
+	  blob_names_index_[blob_names_[i]] = i;
   }
   for (size_t i = 0; i < layer_names_.size(); ++i) {
-    layer_names_index_[layer_names_[i]] = i;
+	  layer_names_index_[layer_names_[i]] = i;
   }
   GetLearningRateAndWeightDecay();
   LOG(INFO) << "Network initialization done.";

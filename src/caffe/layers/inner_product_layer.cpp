@@ -46,6 +46,11 @@ void InnerProductLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
       bias_filler->Fill(this->blobs_[1].get());
     }
   }  // parameter initialization
+
+  //for debug
+  LOG(INFO)<<"Parameters: " << this->blobs_.size() << " * "<<this->blobs_[0]->num() << " * " << this->blobs_[0]->channels()
+		  << " * " <<this->blobs_[0]->height() <<" * " <<this->blobs_[0]->width();
+
   // Setting up the bias multiplier
   if (bias_term_) {
     bias_multiplier_.reset(new SyncedMemory(M_ * sizeof(Dtype)));
@@ -94,6 +99,59 @@ void InnerProductLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
         top_diff, this->blobs_[0]->cpu_data(), (Dtype)0.,
         (*bottom)[0]->mutable_cpu_diff());
   }
+}
+
+template <typename Dtype>
+void InnerProductLayer<Dtype>::UpdateEqFilter(const vector<Blob<Dtype>*>& top_filter,
+		  const vector<Blob<Dtype>*>& input){
+	if (top_filter.empty()){
+		//the first layer in the chain, initialize using the layer weights
+		for (int i = 0; i<input.size();i++){
+			int inputsize = input[i]->count() / input[i]->num();
+			shared_ptr<Blob<Dtype> > eq_filter(new Blob<Dtype>(input[i]->num(), 1, N_, inputsize));
+			eq_filter->CopyFrom(*(this->blobs_[i]));
+			this->eq_filter_.push_back(eq_filter);
+			//for each input source
+		}
+	}
+	else{
+		// Initializing the eq_filter_:
+		// The size of eq_filter is
+		//    Number_Of_Input_Sources (Vector Size) * Mini_Batch_Size * 1 * Output_Size * Input_Size(Count)
+		//    For inner_product layer, the output is only 1 channel
+		int top_output_num = top_filter[0]->height();
+		for (int i = 0; i< input.size(); i++){
+
+			int inputsize = input[i]->count() / input[i]->num();
+			shared_ptr<Blob<Dtype> > eq_filter(new Blob<Dtype>(input[i]->num(), 1, top_output_num, inputsize));
+
+			const Dtype* top_filter_data;
+
+			// in case of multiple input & multiple output
+			if (top_filter.size() > 1)
+			{
+				top_filter_data = top_filter[i]->mutable_cpu_data();
+			}
+			else{
+				top_filter_data = top_filter[0]->mutable_cpu_data();
+			}
+
+			const Dtype* weight_data = this->blobs_[i]->mutable_cpu_data();
+			Dtype* eq_filter_data = eq_filter->mutable_cpu_data();
+
+			//each input image may generate different filters
+			for (int i = 0; i<this->eq_filter_[0]->num(); i++){
+				//Calculate the eq_filter_ by using matrix multiplication:
+				//eq_filter_ = top_filter * weights (blobs_)
+				caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasTrans,
+						top_output_num, K_, N_, (Dtype)1., top_filter_data, weight_data, (Dtype)0., eq_filter_data);
+				top_filter_data += top_filter[0]->offset(1);
+				eq_filter_data += this->eq_filter_[0]->offset(1);
+			}
+
+			this->eq_filter_.push_back(eq_filter);
+		}
+	}
 }
 
 INSTANTIATE_CLASS(InnerProductLayer);
