@@ -1,3 +1,10 @@
+[Feedback Deep CNN based on Caffe]
+Created by [Xianming Liu](http://www.ifp.illinois.edu/~xliu102/), Yi Yang 
+
+Performed during internship at Baidu IDL, CA, USA.
+
+==================================================================================
+
 [Caffe: Convolutional Architecture for Fast Feature Extraction](http://caffe.berkeleyvision.org)
 
 Created by [Yangqing Jia](http://daggerfs.com), UC Berkeley EECS department.
