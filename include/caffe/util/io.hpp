@@ -53,7 +53,6 @@ inline void ReadProtoFromBinaryFileOrDie(const string& filename,
   ReadProtoFromBinaryFileOrDie(filename.c_str(), proto);
 }
 
-
 void WriteProtoToBinaryFile(const Message& proto, const char* filename);
 inline void WriteProtoToBinaryFile(
     const Message& proto, const string& filename) {
@@ -81,6 +80,9 @@ void hdf5_load_nd_dataset(
 template <typename Dtype>
 void hdf5_save_nd_dataset(
   const hid_t file_id, const string dataset_name, const Blob<Dtype>& blob);
+
+template<typename Dtype>
+void WriteDataToImage(string filename, const int channel, const int height, const int width, Dtype* data);
 
 }  // namespace caffe
 

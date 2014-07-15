@@ -170,4 +170,29 @@ void hdf5_save_nd_dataset<double>(
   CHECK_GE(status, 0) << "Failed to make double dataset " << dataset_name;
 }
 
+template<typename Dtype>
+void WriteDataToImage(string filename, const int channel, const int height, const int width, Dtype* data){
+	//first, normalize the data
+	//Converting the data
+	//Construct the image
+	cv::Mat img;
+	if (channel == 3){
+		if (sizeof(Dtype) == 4){
+			img = new cv::Mat(height, width, CV_32FC3);
+		}
+		else if(sizeof(Dtype) == 8){
+			img = new cv::Mat(height, width, CV_64FC3);
+		}
+	}
+	else if( channel == 1){
+		if (sizeof(Dtype) == 4){
+			img = new cv::Mat(height, width, CV_32F);
+		}
+		else if(sizeof(Dtype) == 8){
+			img = new cv::Mat(height, width, CV_64F);
+		}
+	}
+	cv::imwrite(filename, img);
+}
+
 }  // namespace caffe
