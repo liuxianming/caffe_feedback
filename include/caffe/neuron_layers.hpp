@@ -45,8 +45,8 @@ class FeedbackNeuronLayer : public FeedbackLayer<Dtype> {
      : FeedbackLayer<Dtype>(param) {}
   virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
-  virtual void UpdateEqFilter(const vector<Blob<Dtype>*>& top_filter,
-  			const vector<Blob<Dtype>*>& input) = 0;
+  virtual void UpdateEqFilter(const Blob<Dtype>* top_filter,
+			      const vector<Blob<Dtype>*>& input) = 0;
 };
 
 /* BNLLLayer
@@ -163,7 +163,7 @@ class ReLULayer : public FeedbackNeuronLayer<Dtype> {
   virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
       const bool propagate_down, vector<Blob<Dtype>*>* bottom);
 
-  virtual void UpdateEqFilter(const vector<Blob<Dtype>*>& top_filter,
+  virtual void UpdateEqFilter(const Blob<Dtype>* top_filter,
   			const vector<Blob<Dtype>*>& input);
 };
 

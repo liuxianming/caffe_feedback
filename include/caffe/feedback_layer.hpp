@@ -18,34 +18,32 @@ using std::vector;
 
 namespace caffe {
 
-template <typename Dtype>
-class FeedbackLayer : public Layer<Dtype>{
+  template <typename Dtype>
+  class FeedbackLayer : public Layer<Dtype>{
 
-public:
+  public:
 
-	explicit FeedbackLayer(const LayerParameter& param)
-	      : Layer<Dtype>(param) {}
-	// Returns the equivalent weights from current input to outputs:
-	inline vector<shared_ptr<Blob<Dtype> > >& eq_filter() {
-		return eq_filter_;
-	}
-protected:
-	// The function to update the eq_filter_ given current layer and the filter of upper layers
-	// top_filter: the eq_filter from the top layer
-	// input: input from the bottom layer(s)
-	virtual void UpdateEqFilter(const vector<Blob<Dtype>*>& top_filter,
-			const vector<Blob<Dtype>*>& input) = 0;
+    explicit FeedbackLayer(const LayerParameter& param)
+      : Layer<Dtype>(param) {}
+    // Returns the equivalent weights from current input to outputs:
+    inline Blob<Dtype> >* eq_filter() {
+      return eq_filter_;
+    }
+  protected:
+    // The function to update the eq_filter_ given current layer and the filter of upper layers
+    // top_filter: the eq_filter from the top layer
+    // input: input from the bottom layer(s)
+    virtual void UpdateEqFilter(const Blob<Dtype>* top_filter,
+				const vector<Blob<Dtype>*>& input) = 0;
 
-	// eq_filter_: The equivalent weights from current input to final output:
-	// That is: final output = eq_filter_ * bottom
-	// Size of eq_filter_
-	// output_categories * image_num * output_channels * output_size * input_size
-	//       |                 |              |               |             |
-	//   (vector)            (num)        (channel)        (height)      (width)
-	vector<shared_ptr<Blob<Dtype> > > eq_filter_;
-
-};
-
+    // eq_filter_: The equivalent weights from current input to final output:
+    // That is: final output = eq_filter_ * bottom
+    // Size of eq_filter_
+    // image_num * output_channels * output_size * input_size
+    //      |              |               |             |
+    //    (num)        (channel)        (height)      (width)
+    shared_ptr<Blob<Dtype> > eq_filter_;
+  };
 } //namespace caffe
 
 #endif //CAFFE_FEEDBACK_LAYER_HPP_

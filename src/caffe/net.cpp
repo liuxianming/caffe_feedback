@@ -190,7 +190,10 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
   }
   for (size_t i = 0; i < layer_names_.size(); ++i) {
 	  layer_names_index_[layer_names_[i]] = i;
+	  //for debug:
+	  LOG(INFO)<<layer_names_[i];
   }
+
   GetLearningRateAndWeightDecay();
   LOG(INFO) << "Network initialization done.";
   LOG(INFO) << "Memory required for Data " << memory_used*sizeof(Dtype);

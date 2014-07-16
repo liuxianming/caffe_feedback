@@ -1,4 +1,4 @@
-// Copyright 2014 BVLC and contributors.
+\// Copyright 2014 BVLC and contributors.
 
 #ifndef CAFFE_VISION_LAYERS_HPP_
 #define CAFFE_VISION_LAYERS_HPP_
@@ -103,7 +103,7 @@ class ConvolutionLayer : public FeedbackLayer<Dtype> {
   virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
       const bool propagate_down, vector<Blob<Dtype>*>* bottom);
 
-  virtual void UpdateEqFilter(const vector<Blob<Dtype>*>& top_filter,
+  virtual void UpdateEqFilter(const Blob<Dtype>* top_filter,
   		  const vector<Blob<Dtype>*>& input);
 
   int kernel_size_;
@@ -213,7 +213,7 @@ class InnerProductLayer : public FeedbackLayer<Dtype> {
   virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
       const bool propagate_down, vector<Blob<Dtype>*>* bottom);
 
-  virtual void UpdateEqFilter(const vector<Blob<Dtype>*>& top_filter,
+  virtual void UpdateEqFilter(const Blob<Dtype>* top_filter,
   		  const vector<Blob<Dtype>*>& input);
 
   int M_;
@@ -351,7 +351,7 @@ class PoolingLayer : public FeedbackLayer<Dtype> {
       const bool propagate_down, vector<Blob<Dtype>*>* bottom);
   virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
       const bool propagate_down, vector<Blob<Dtype>*>* bottom);
-  virtual void UpdateEqFilter(const vector<Blob<Dtype>*>& top_filter,
+  virtual void UpdateEqFilter(const Blob<Dtype>* top_filter,
 		  const vector<Blob<Dtype>*>& input);
 
   int kernel_size_;
