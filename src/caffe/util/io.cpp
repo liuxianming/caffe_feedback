@@ -173,37 +173,43 @@ void hdf5_save_nd_dataset<double>(
 //ToDo(Xianming): Write a test - WriteDataToImage()
 template<typename Dtype>
 void WriteDataToImage(string filename, const int channel, const int height, const int width, Dtype* data){
-	//The pixels stored in data is organized as: channel, height, and width
-	//In opencv::Mat, the data is stored as col (width)->row(height)->channel
-	//So if the data is 3-channel, need to re-organized the data
-	cv::Mat* img;
-	if (channel == 3){
-		if (sizeof(Dtype) == 4){
-			img = new cv::Mat(height, width, CV_32FC3);
-		}
-		else if(sizeof(Dtype) == 8){
-			img = new cv::Mat(height, width, CV_64FC3);
-		}
-		int data_offset = height * width;
-		for (int c = 0; c<width; c++){
-			for(int r=0;r<height; r++){
-				//b-g-r
-				for (int i = 0; i<3; i++) {
-					*(img->data + img->step * c + r + i) = *(data + r*width + c + data_offset * i);
-				}
-			}
-		}
-	}
-	else if( channel == 1){
-		if (sizeof(Dtype) == 4){
-			img = (new cv::Mat(height, width, CV_32F, data))->t();
-		}
-		else if(sizeof(Dtype) == 8){
-			img = (new cv::Mat(height, width, CV_64F, data))->t();
-		}
-	}
-	cv::imwrite(filename, *img);
-	//Now, for Dtype, only double and float are supported
+  //The pixels stored in data is organized as: channel, height, and width
+  //In opencv::Mat, the data is stored as col (width)->row(height)->channel
+  //So if the data is 3-channel, need to re-organized the data
+  cv::Mat* img;
+  if (channel == 3){
+      if (sizeof(Dtype) == 4){
+          img = new cv::Mat(height, width, CV_32FC3);
+      }
+      else if(sizeof(Dtype) == 8){
+          img = new cv::Mat(height, width, CV_64FC3);
+      }
+      int data_offset = height * width;
+      for (int c = 0; c<width; c++){
+          for(int r=0;r<height; r++){
+              //b-g-r
+              for (int i = 0; i<3; i++) {
+                  *(img->data + img->step * c + r + i) = *(data + r*width + c + data_offset * i);
+              }
+          }
+      }
+  }
+  else if( channel == 1){
+      if (sizeof(Dtype) == 4){
+          img = (new cv::Mat(height, width, CV_32F));
+      }
+      else if(sizeof(Dtype) == 8){
+          img = (new cv::Mat(height, width, CV_64F));
+      }
+
+      for (int c = 0; c<width; c++){
+          for(int r=0;r<height; r++){
+              *(img->data + img->step * c + r) = *(data + r*width + c);
+          }
+      }
+  }
+  cv::imwrite(filename, *img);
+  //Now, for Dtype, only double and float are supported
 }
 
 }  // namespace caffe

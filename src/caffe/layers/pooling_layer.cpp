@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "caffe/layer.hpp"
-#include "caffe/feedback_layer.hpp"
 #include "caffe/vision_layers.hpp"
 #include "caffe/util/math_functions.hpp"
 
@@ -82,10 +81,9 @@ namespace caffe {
             	  top_data[ph * pooled_width_ + pw] =
 		    max(top_data[ph * pooled_width_ + pw],
 			bottom_data[h * width_ + w]);
-            	  if (top_data[ph * pooled_width_ + pw] == bottom_data[h * width_ + w])
-		    {
-		      mask_data[ph * pooled_width_ + pw] = static_cast<Dtype> (h * width_ + w);
-		    }
+            	  if (top_data[ph * pooled_width_ + pw] == bottom_data[h * width_ + w]) {
+            	      mask_data[ph * pooled_width_ + pw] = static_cast<Dtype> (h * width_ + w);
+            	  }
 		}
 	      }
 	    }
@@ -235,33 +233,32 @@ namespace caffe {
     int M_ = input[0]->num();
     int K_ = input[0]->count() / input[0]->num();
     int N_ = this->pooled_height_ * this->pooled_width_;
-    int top_output_num = top_filter[0]->height();
-    int top_output_channel = top_filter[0]->channels();
+    int top_output_num = top_filter->height();
+    int top_output_channel = top_filter->channels();
 
-    if (eq_filter == null){
-      eq_filter_ = new Blob<Dtype>(M_, top_output_channel, top_output_num, K_);
+    if (this->eq_filter_ == NULL){
+      //If it is a null pointer (not initialized), create mem space
+      this->eq_filter_ = new Blob<Dtype>(M_, top_output_channel, top_output_num, K_);
     }
 
     //Calculation of eq_filter_
-    const Dtype* top_filter_data = top_filter->mutable_cpu_data();
-    const Dtype* mask_data = this->blobs_[0]->mutable_cpu_data();
+    const Dtype* top_filter_data = top_filter->cpu_data();
+    const Dtype* mask_data = this->blobs_[0]->cpu_data();
     Dtype* eq_filter_data = this->eq_filter_->mutable_cpu_data();
 
     //Initialize as all 0
-    memset(eq_filter_data, 0, sizeof(Dtype) * this->eq_filter_[0]->count());
+    memset(eq_filter_data, 0, sizeof(Dtype) * this->eq_filter_->count());
 
     for (int n = 0; n<input[0]->num(); n++){
-      for (int c = 0; c< this->blobs_[0]->channels(); c++)
-	{
-	  for (int offset = 0; offset < this->blobs_[0]->height() * this->blobs_[0]->width(); ++offset){
-	    //Need to implement in detail
-	    int mask_offset = static_cast<int>(*(mask_data + offset));
-	    *(eq_filter_data + offset) = *(top_filter_data+offset);
-	  }
-	  //adjust the mask_data ptr to the next channel
-	  mask_data += this->blobs_[0]->offset(0,1);
-	  eq_filter_data += this->eq_filter_[0]->offset(0,1);
-	}	//for each channel
+        for (int c = 0; c< this->blobs_[0]->channels(); c++){
+            for (int offset = 0; offset < this->blobs_[0]->height() * this->blobs_[0]->width(); ++offset){
+                int mask_offset = static_cast<int>(*(mask_data + offset));
+                *(eq_filter_data + mask_offset) = *(top_filter_data+offset);
+            }
+            //adjust the mask_data ptr to the next channel
+            mask_data += this->blobs_[0]->offset(0,1);
+            eq_filter_data += this->eq_filter_->offset(0,1);
+        }	//for each channel
     }	//for each image in mini-batch
   }
 

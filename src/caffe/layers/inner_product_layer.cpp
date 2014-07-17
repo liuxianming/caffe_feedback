@@ -11,149 +11,135 @@
 
 namespace caffe {
 
-template <typename Dtype>
-void InnerProductLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
+  template <typename Dtype>
+  void InnerProductLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top) {
-  CHECK_EQ(bottom.size(), 1) << "IP Layer takes a single blob as input.";
-  CHECK_EQ(top->size(), 1) << "IP Layer takes a single blob as output.";
-  const int num_output = this->layer_param_.inner_product_param().num_output();
-  bias_term_ = this->layer_param_.inner_product_param().bias_term();
-  // Figure out the dimensions
-  M_ = bottom[0]->num();
-  K_ = bottom[0]->count() / bottom[0]->num();
-  N_ = num_output;
-  (*top)[0]->Reshape(bottom[0]->num(), num_output, 1, 1);
-  // Check if we need to set up the weights
-  if (this->blobs_.size() > 0) {
-    LOG(INFO) << "Skipping parameter initialization";
-  } else {
-    if (bias_term_) {
-      this->blobs_.resize(2);
+    CHECK_EQ(bottom.size(), 1) << "IP Layer takes a single blob as input.";
+    CHECK_EQ(top->size(), 1) << "IP Layer takes a single blob as output.";
+    const int num_output = this->layer_param_.inner_product_param().num_output();
+    bias_term_ = this->layer_param_.inner_product_param().bias_term();
+    // Figure out the dimensions
+    M_ = bottom[0]->num();
+    K_ = bottom[0]->count() / bottom[0]->num();
+    N_ = num_output;
+    (*top)[0]->Reshape(bottom[0]->num(), num_output, 1, 1);
+    // Check if we need to set up the weights
+    if (this->blobs_.size() > 0) {
+        LOG(INFO) << "Skipping parameter initialization";
     } else {
-      this->blobs_.resize(1);
-    }
-    // Intialize the weight
-    this->blobs_[0].reset(new Blob<Dtype>(1, 1, N_, K_));
-    // fill the weights
-    shared_ptr<Filler<Dtype> > weight_filler(GetFiller<Dtype>(
-        this->layer_param_.inner_product_param().weight_filler()));
-    weight_filler->Fill(this->blobs_[0].get());
-    // If necessary, intiialize and fill the bias term
+        if (bias_term_) {
+            this->blobs_.resize(2);
+        } else {
+            this->blobs_.resize(1);
+        }
+        // Intialize the weight
+        this->blobs_[0].reset(new Blob<Dtype>(1, 1, N_, K_));
+        // fill the weights
+        shared_ptr<Filler<Dtype> > weight_filler(GetFiller<Dtype>(
+            this->layer_param_.inner_product_param().weight_filler()));
+        weight_filler->Fill(this->blobs_[0].get());
+        // If necessary, intiialize and fill the bias term
+        if (bias_term_) {
+            this->blobs_[1].reset(new Blob<Dtype>(1, 1, 1, N_));
+            shared_ptr<Filler<Dtype> > bias_filler(GetFiller<Dtype>(
+                this->layer_param_.inner_product_param().bias_filler()));
+            bias_filler->Fill(this->blobs_[1].get());
+        }
+    }  // parameter initialization
+
+    //for debug
+    LOG(INFO)<<"Parameters: " << this->blobs_.size() << " * "<<this->blobs_[0]->num() << " * " << this->blobs_[0]->channels()
+		      << " * " <<this->blobs_[0]->height() <<" * " <<this->blobs_[0]->width();
+
+    // Setting up the bias multiplier
     if (bias_term_) {
-      this->blobs_[1].reset(new Blob<Dtype>(1, 1, 1, N_));
-      shared_ptr<Filler<Dtype> > bias_filler(GetFiller<Dtype>(
-          this->layer_param_.inner_product_param().bias_filler()));
-      bias_filler->Fill(this->blobs_[1].get());
-    }
-  }  // parameter initialization
-
-  //for debug
-  LOG(INFO)<<"Parameters: " << this->blobs_.size() << " * "<<this->blobs_[0]->num() << " * " << this->blobs_[0]->channels()
-		  << " * " <<this->blobs_[0]->height() <<" * " <<this->blobs_[0]->width();
-
-  // Setting up the bias multiplier
-  if (bias_term_) {
-    bias_multiplier_.reset(new SyncedMemory(M_ * sizeof(Dtype)));
-    Dtype* bias_multiplier_data =
-        reinterpret_cast<Dtype*>(bias_multiplier_->mutable_cpu_data());
-    for (int i = 0; i < M_; ++i) {
-        bias_multiplier_data[i] = 1.;
+        bias_multiplier_.reset(new SyncedMemory(M_ * sizeof(Dtype)));
+        Dtype* bias_multiplier_data =
+            reinterpret_cast<Dtype*>(bias_multiplier_->mutable_cpu_data());
+        for (int i = 0; i < M_; ++i) {
+            bias_multiplier_data[i] = 1.;
+        }
     }
   }
-}
 
-template <typename Dtype>
-Dtype InnerProductLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
-    vector<Blob<Dtype>*>* top) {
-  const Dtype* bottom_data = bottom[0]->cpu_data();
-  Dtype* top_data = (*top)[0]->mutable_cpu_data();
-  const Dtype* weight = this->blobs_[0]->cpu_data();
-  caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasTrans, M_, N_, K_, (Dtype)1.,
-      bottom_data, weight, (Dtype)0., top_data);
-  if (bias_term_) {
-    caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, M_, N_, 1, (Dtype)1.,
-        reinterpret_cast<const Dtype*>(bias_multiplier_->cpu_data()),
-        this->blobs_[1]->cpu_data(), (Dtype)1., top_data);
+  template <typename Dtype>
+  Dtype InnerProductLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top) {
+    const Dtype* bottom_data = bottom[0]->cpu_data();
+    Dtype* top_data = (*top)[0]->mutable_cpu_data();
+    const Dtype* weight = this->blobs_[0]->cpu_data();
+    caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasTrans, M_, N_, K_, (Dtype)1.,
+        bottom_data, weight, (Dtype)0., top_data);
+    if (bias_term_) {
+        caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, M_, N_, 1, (Dtype)1.,
+            reinterpret_cast<const Dtype*>(bias_multiplier_->cpu_data()),
+            this->blobs_[1]->cpu_data(), (Dtype)1., top_data);
+    }
+    return Dtype(0);
   }
-  return Dtype(0);
-}
 
-template <typename Dtype>
-void InnerProductLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
-    const bool propagate_down,
-    vector<Blob<Dtype>*>* bottom) {
-  const Dtype* top_diff = top[0]->cpu_diff();
-  const Dtype* bottom_data = (*bottom)[0]->cpu_data();
-  // Gradient with respect to weight
-  caffe_cpu_gemm<Dtype>(CblasTrans, CblasNoTrans, N_, K_, M_, (Dtype)1.,
-      top_diff, bottom_data, (Dtype)0., this->blobs_[0]->mutable_cpu_diff());
-  if (bias_term_) {
-    // Gradient with respect to bias
-    caffe_cpu_gemv<Dtype>(CblasTrans, M_, N_, (Dtype)1., top_diff,
-        reinterpret_cast<const Dtype*>(bias_multiplier_->cpu_data()), (Dtype)0.,
-        this->blobs_[1]->mutable_cpu_diff());
+  template <typename Dtype>
+  void InnerProductLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const bool propagate_down,
+      vector<Blob<Dtype>*>* bottom) {
+    const Dtype* top_diff = top[0]->cpu_diff();
+    const Dtype* bottom_data = (*bottom)[0]->cpu_data();
+    // Gradient with respect to weight
+    caffe_cpu_gemm<Dtype>(CblasTrans, CblasNoTrans, N_, K_, M_, (Dtype)1.,
+        top_diff, bottom_data, (Dtype)0., this->blobs_[0]->mutable_cpu_diff());
+    if (bias_term_) {
+        // Gradient with respect to bias
+        caffe_cpu_gemv<Dtype>(CblasTrans, M_, N_, (Dtype)1., top_diff,
+            reinterpret_cast<const Dtype*>(bias_multiplier_->cpu_data()), (Dtype)0.,
+            this->blobs_[1]->mutable_cpu_diff());
+    }
+    if (propagate_down) {
+        // Gradient with respect to bottom data
+        caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, M_, K_, N_, (Dtype)1.,
+            top_diff, this->blobs_[0]->cpu_data(), (Dtype)0.,
+            (*bottom)[0]->mutable_cpu_diff());
+    }
   }
-  if (propagate_down) {
-    // Gradient with respect to bottom data
-    caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, M_, K_, N_, (Dtype)1.,
-        top_diff, this->blobs_[0]->cpu_data(), (Dtype)0.,
-        (*bottom)[0]->mutable_cpu_diff());
+
+  template <typename Dtype>
+  void InnerProductLayer<Dtype>::UpdateEqFilter(const Blob<Dtype>* top_filter,
+      const vector<Blob<Dtype>*>& input){
+    if (top_filter == NULL){
+        //the first layer in the chain, initialize using the layer weights
+        int inputsize = input[0]->count() / input[0]->num();
+        this->eq_filter_ = new Blob<Dtype>(input[0]->num(), 1, N_, inputsize);
+        this->eq_filter_->CopyFrom(*(this->blobs_[0]));
+    }
+    else{
+        // Initializing the eq_filter_:
+        // The size of eq_filter is
+        //    Mini_Batch_Size * Final_Output_Channel (1) * Output_Size * Input_Size(Count)
+        //    For inner_product layer, the output is only 1 channel
+        int top_output_num = top_filter->height();
+
+        int inputsize = input[0]->count() / input[0]->num();
+
+        if(this->eq_filter_ == NULL){
+            this->eq_filter_ = new Blob<Dtype>(input[0]->num(), 1, top_output_num, inputsize);
+        }
+
+        const Dtype* top_filter_data = top_filter->cpu_data();
+
+        const Dtype* weight_data = this->blobs_[0]->cpu_data();
+        Dtype* eq_filter_data = this->eq_filter_->mutable_cpu_data();
+
+        //each input image may generate different filters
+        for (int i = 0; i<this->eq_filter_->num(); i++){
+            //Calculate the eq_filter_ by using matrix multiplication:
+            //eq_filter_ = top_filter * weights (blobs_)
+            caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasTrans,
+                top_output_num, K_, N_, (Dtype)1., top_filter_data, weight_data, (Dtype)0., eq_filter_data);
+            top_filter_data += top_filter->offset(1);
+            eq_filter_data += this->eq_filter_->offset(1);
+        }
+    }
   }
-}
 
-template <typename Dtype>
-void InnerProductLayer<Dtype>::UpdateEqFilter(const vector<Blob<Dtype>*>& top_filter,
-		  const vector<Blob<Dtype>*>& input){
-	if (top_filter.empty()){
-		//the first layer in the chain, initialize using the layer weights
-		for (int i = 0; i<input.size();i++){
-			int inputsize = input[i]->count() / input[i]->num();
-			shared_ptr<Blob<Dtype> > eq_filter(new Blob<Dtype>(input[i]->num(), 1, N_, inputsize));
-			eq_filter->CopyFrom(*(this->blobs_[i]));
-			this->eq_filter_.push_back(eq_filter);
-			//for each input source
-		}
-	}
-	else{
-		// Initializing the eq_filter_:
-		// The size of eq_filter is
-		//    Number_Of_Input_Sources (Vector Size) * Mini_Batch_Size * 1 * Output_Size * Input_Size(Count)
-		//    For inner_product layer, the output is only 1 channel
-		int top_output_num = top_filter[0]->height();
-		for (int i = 0; i< input.size(); i++){
-
-			int inputsize = input[i]->count() / input[i]->num();
-			shared_ptr<Blob<Dtype> > eq_filter(new Blob<Dtype>(input[i]->num(), 1, top_output_num, inputsize));
-
-			const Dtype* top_filter_data;
-
-			// in case of multiple input & multiple output
-			if (top_filter.size() > 1)
-			{
-				top_filter_data = top_filter[i]->mutable_cpu_data();
-			}
-			else{
-				top_filter_data = top_filter[0]->mutable_cpu_data();
-			}
-
-			const Dtype* weight_data = this->blobs_[i]->mutable_cpu_data();
-			Dtype* eq_filter_data = eq_filter->mutable_cpu_data();
-
-			//each input image may generate different filters
-			for (int i = 0; i<this->eq_filter_[0]->num(); i++){
-				//Calculate the eq_filter_ by using matrix multiplication:
-				//eq_filter_ = top_filter * weights (blobs_)
-				caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasTrans,
-						top_output_num, K_, N_, (Dtype)1., top_filter_data, weight_data, (Dtype)0., eq_filter_data);
-				top_filter_data += top_filter[0]->offset(1);
-				eq_filter_data += this->eq_filter_[0]->offset(1);
-			}
-
-			this->eq_filter_.push_back(eq_filter);
-		}
-	}
-}
-
-INSTANTIATE_CLASS(InnerProductLayer);
+  INSTANTIATE_CLASS(InnerProductLayer);
 
 }  // namespace caffe

@@ -6,7 +6,6 @@
 #include <string>
 
 #include "caffe/layer.hpp"
-#include "caffe/feedback_layer.hpp"
 #include "caffe/vision_layers.hpp"
 #include "caffe/proto/caffe.pb.h"
 

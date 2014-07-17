@@ -9,7 +9,6 @@
 #include "caffe/common.hpp"
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/layer.hpp"
-#include "caffe/feedback_layer.hpp"
 #include "caffe/net.hpp"
 #include "caffe/feedback_net.hpp"
 #include "caffe/util/io.hpp"
@@ -27,22 +26,23 @@ namespace caffe{
   void FeedbackNet<Dtype>::InitVisualization(){
     //copy the ptr of layers to fLayers
     //The first layer is not included, because it is input data layer
-    for(int i = 1; i<this->layers_.size(); i++){
-        fLayers_.push_back(shared_ptr<FeedbackLayer> layers_[i]);
+    for(int i = 1; i < this->layers_.size(); i++){
+        shared_ptr<Layer<Dtype> > _layer = this->layers_[i];
+        fLayers_.push_back(_layer);
     }
 
     //setup the eq_filter_ flow 
     /*
-     * Follow the similar workflow as in Net.Init(), 
+     * Follow the similar work flow as in Net.Init(),
      * which generates input blobs and output blobs for layers.
      * As for the input of each layer used for updating eq_filter_, 
-     * use the same input as feedforward process
-     * Remeber here, fLayerIndex = LayerIndex - 1, which omits the input data layer
+     * use the same input as feed-forward process
+     * Remember here, fLayerIndex = LayerIndex - 1, which omits the input data layer
      * and the layer on the top of the whole network does not has eq_filter_top
      */
-    for (int i = 0; i < fLayers.size() - 1; ++i) {
-      LayerParameter layer_param = fLayers_[i]->layer_param_;
-      int output_layer_idx = this->layer_names_index_[layer_param.layer_name]
+    for (int i = 0; i < fLayers_.size() - 1; ++i) {
+      //LayerParameter layer_param = fLayers_[i]->layer_param_;
+      //int output_layer_idx = this->layer_names_index_[layer_param.layer_name];
     }
 
   }
@@ -68,7 +68,7 @@ namespace caffe{
     //2. For each layer in the vector, calculate the eq_filter_ for each layer
     UpdateEqFilter();
     //3. Finally, get the eq_filter_ at the end layer as the output;
-    vector<shared_ptr<Blob<Dtype> > > eq_filter  = this->fLayers_[endLayerIdx_]->eq_filter();
+    Blob<Dtype>* eq_filter  = fLayers_[endLayerIdx_]->eq_filter();
     //Finally, re-organize the eq_filter to get this->visualization_
 
   }

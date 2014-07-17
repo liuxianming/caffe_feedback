@@ -10,7 +10,6 @@
 #include "caffe/blob.hpp"
 #include "caffe/common.hpp"
 #include "caffe/layer.hpp"
-#include "caffe/feedback_layer.hpp"
 #include "caffe/proto/caffe.pb.h"
 
 namespace caffe{
@@ -53,16 +52,14 @@ namespace caffe{
     vector<Blob<Dtype>* > visualization_;
 
     //The vector stores all the layers need to perform feedbacks
-    vector<shared_ptr<FeedbackLayer<Dtype> > > fLayers_; 
+    vector<shared_ptr<Layer<Dtype> > > fLayers_;
     
     //The vector stores the ptr list of eq_filter for each feedback_layer in fLayers_
-    vector<vector<shared_ptr<Blob<Dtype> > > *> eq_filter_top_;
+    vector<Blob<Dtype>* > eq_filter_top_;
 
     int startLayerIdx_;
     int startChannelIdx_;
     int endLayerIdx_;
-
-    vector<shared_ptr<FeedbackLayer<Dtype> > > feedback_layers_;
   };
 } // namespace caffe
 

@@ -52,7 +52,8 @@ class Layer {
     return blobs_;
   }
 
-
+  inline Blob<Dtype>* eq_filter() {
+        return eq_filter_;}
 
   // Returns the layer parameter
   const LayerParameter& layer_param() { return layer_param_; }
@@ -87,6 +88,24 @@ class Layer {
     // LOG(WARNING) << "Using CPU code as backup.";
     Backward_cpu(top, propagate_down, bottom);
   }
+
+  // The function to update the eq_filter_ given current layer and the filter of upper layers
+  // top_filter: the eq_filter from the top layer
+  // input: input from the bottom layer(s)
+  virtual void UpdateEqFilter(const Blob<Dtype>* top_filter,
+      const vector<Blob<Dtype>*>& input){}
+
+  // eq_filter_: The equivalent weights from current input to final output:
+  // That is: final output = eq_filter_ * bottom
+  // Size of eq_filter_
+  // image_num * output_channels * output_size * input_size
+  //      |              |               |             |
+  //    (num)        (channel)        (height)      (width)
+  // Since in this program, all layers are considered as single input and single output
+  // the eq_filter_ is designed as a Blob ptr instead of a vector.
+  // For the multiple input / output network, the program will convert the structure into
+  // a multiple network structure and perform training/testing/visualization/feedback.
+  Blob<Dtype>* eq_filter_;
 
   DISABLE_COPY_AND_ASSIGN(Layer);
 };  // class Layer

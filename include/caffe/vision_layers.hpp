@@ -1,4 +1,4 @@
-\// Copyright 2014 BVLC and contributors.
+// Copyright 2014 BVLC and contributors.
 
 #ifndef CAFFE_VISION_LAYERS_HPP_
 #define CAFFE_VISION_LAYERS_HPP_
@@ -10,7 +10,6 @@
 #include "caffe/blob.hpp"
 #include "caffe/common.hpp"
 #include "caffe/layer.hpp"
-#include "caffe/feedback_layer.hpp"
 #include "caffe/neuron_layers.hpp"
 #include "caffe/loss_layers.hpp"
 #include "caffe/data_layers.hpp"
@@ -53,10 +52,10 @@ class ConcatLayer : public Layer<Dtype> {
 /* ConvolutionLayer
 */
 template <typename Dtype>
-class ConvolutionLayer : public FeedbackLayer<Dtype> {
+class ConvolutionLayer : public Layer<Dtype> {
  public:
   explicit ConvolutionLayer(const LayerParameter& param)
-      : FeedbackLayer<Dtype>(param) {}
+      : Layer<Dtype>(param) {}
   virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
 
@@ -84,7 +83,7 @@ class ConvolutionLayer : public FeedbackLayer<Dtype> {
   //response: the response after convolution, a 3-dimensional matrix (in shape of Blob)
   //filter: convolution filter, a 4-dimensional matrix (in shape of Blob)
   //output: the deconvolution results, of the same size of input image, a 3-dimensional matrix
-  void deconvolution(Dtype* response,
+  void deconvolution(const Dtype* response,
 		  Dtype* filter,
 		  Dtype* output,
 		  int output_num,
@@ -94,6 +93,7 @@ class ConvolutionLayer : public FeedbackLayer<Dtype> {
 		  int kernel_size,
 		  int pad,
 		  int stride);
+
   virtual Dtype Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
   virtual Dtype Forward_gpu(const vector<Blob<Dtype>*>& bottom,
@@ -196,10 +196,10 @@ class Im2colLayer : public Layer<Dtype> {
 /* InnerProductLayer
 */
 template <typename Dtype>
-class InnerProductLayer : public FeedbackLayer<Dtype> {
+class InnerProductLayer : public Layer<Dtype> {
  public:
   explicit InnerProductLayer(const LayerParameter& param)
-      : FeedbackLayer<Dtype>(param) {}
+      : Layer<Dtype>(param) {}
   virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
 
@@ -330,10 +330,10 @@ class MemoryDataLayer : public Layer<Dtype> {
 };
 
 template <typename Dtype>
-class PoolingLayer : public FeedbackLayer<Dtype> {
+class PoolingLayer : public Layer<Dtype> {
  public:
   explicit PoolingLayer(const LayerParameter& param)
-      : FeedbackLayer<Dtype>(param) {}
+      : Layer<Dtype>(param) {}
   virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
 

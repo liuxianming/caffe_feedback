@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <vector>
 
+#include "caffe/neuron_layers.hpp"
 #include "caffe/layer.hpp"
 #include "caffe/vision_layers.hpp"
 
@@ -38,38 +39,35 @@ namespace caffe {
   }
 
   template <typename Dtype>
-  void ReLULayer<Dtype>::UpdateEqFilter(const vector<Blob<Dtype>*>& top_filter, const vector<Blob<Dtype>*>& input)
+  void ReLULayer<Dtype>::UpdateEqFilter(const Blob<Dtype>* top_filter, const vector<Blob<Dtype>*>& input)
   {
     //Initialization:
     //The size of eq_filter_ is the same as top_filter
-    for(int i = 0;i<top_filter.size(); i++) {
-      shared_ptr<Blob<Dtype> > eq_filter(new Blob<Dtype>(top_filter[i]->num(),
-							 top_filter[i]->channels(),
-							 top_filter[i]->height(),
-							 top_filter[i]->width()));
+    if (this->eq_filter_ == NULL){
+        this->eq_filter_ = new Blob<Dtype>(top_filter->num(),
+            top_filter->channels(),
+            top_filter->height(),
+            top_filter->width());
+    }
 
-      eq_filter->CopyFrom(*top_filter[i]);
+    this->eq_filter_->CopyFrom(*top_filter);
 
-      //add constraints:
-      Dtype* eq_filter_data = eq_filter->mutable_cpu_data();
-      int inputsize = input[i]->count() / input[i]->num();
-      Dtype* input_data = input[i]->mutable_cpu_data();
+    //add constraints:
+    Dtype* eq_filter_data = this->eq_filter_->mutable_cpu_data();
+    int inputsize = input[0]->count() / input[0]->num();
+    Dtype* input_data = input[0]->mutable_cpu_data();
 
-      for (int m = 0; m<input[i]->num(); m++) {
-	for (int offset = 0; offset<inputsize; offset++)
-	  {
-	    if (*(input_data + offset) < 0){
-	      for(int c = 0; c<eq_filter->channels(); c++){
-		for(int o = 0; o<eq_filter->height(); o++){
-		  *(eq_filter_data + offset + eq_filter->offset(m, c, o)) = 0;
-		} // each output
-	      } //each channel
-	    }
-	  }//for each input element
-      }// for each image in the mini-batch
-
-      this->eq_filter_.push_back(eq_filter);
-    }//for each input source (by default, = 1)
+    for (int m = 0; m<input[0]->num(); m++) {
+        for (int offset = 0; offset<inputsize; offset++) {
+            if (*(input_data + offset) < 0){
+                for(int c = 0; c<this->eq_filter_->channels(); c++){
+                    for(int o = 0; o<this->eq_filter_->height(); o++){
+                        *(eq_filter_data + offset + this->eq_filter_->offset(m, c, o)) = 0;
+                    } // each output
+                } //each channel
+            }
+        }//for each input element
+    }// for each image in the mini-batch
   }
 
 

@@ -187,63 +187,32 @@ namespace caffe {
 
   template <typename Dtype>
   void ConvolutionLayer<Dtype>::UpdateEqFilter(const Blob<Dtype>* top_filter,
-					       const vector<Blob<Dtype>*>& input)
-  {
-    //Initializing the eq_filter_
-
-    if (top_filter == NULL) {
-      // Initialize top_filter as identity matrix for each channel,
-      // and the size is output_channel * output_size * output_size
-      int output_size = num_output_;
-      int output_channel = N_ * group_;
-      int input_size = channels_ * width_ * height_;
-
-      shared_ptr<Blob<Dtype> > top_f_ele(new Blob<Dtype>(input[0]->num(), output_channel, output_size, output_size));
-      Dtype* top_f_data = top_f_ele->mutable_cpu_data();
-      memset(top_f_data, 0, sizeof(Dtype) * top_f_ele->count());
-      for (int c = 0; c<output_channel; c++) {
-	for (int i = 0; i<output_size; i++)
-	  *(top_f_data + i*i) = (Dtype) 1.;
-	top_f_data += top_f_ele->offset(0,1);
-      }
-    }
-
+      const vector<Blob<Dtype>*>& input) {
     int input_size = channels_ * width_ * height_;
-    int output_size;
-    int output_channel;
-    for(int s = 0; s<input.size();s++) {
-      // in case of multiple input & multiple output
-      Dtype* top_filter_data;
-      if (top_filter.size() > 1) {
-	output_size = top_filter[s]->height();
-	output_channel = top_filter[s]->channels();
-	top_filter_data = top_filter[s]->mutable_cpu_data();
-      }
-      else{
-	output_size = top_filter[0]->height();
-	output_channel = top_filter[0]->channels();
-	top_filter_data = top_filter[0]->mutable_cpu_data();
-      }
+    int output_size = top_filter->height();
+    int output_channel = top_filter->channels();
 
-      shared_ptr<Blob<Dtype> > eq_filter(new Blob<Dtype>(input[s]->num(), output_channel, output_size, input_size));
-      Dtype* eq_filter_data = eq_filter->mutable_cpu_data();
+    if(this->eq_filter_ == NULL) {
+        this->eq_filter_ = new Blob<Dtype>(input[0]->num(), output_channel, output_size, input_size);
+    }
+    Dtype* eq_filter_data = this->eq_filter_->mutable_cpu_data();
 
-      int height_out = (height_ + 2 * pad_ - kernel_size_) / stride_ + 1;
-      int width_out = (width_ + 2 * pad_ - kernel_size_) / stride_ + 1;
+    const Dtype* top_filter_data = top_filter->cpu_data();
 
-      for (int n = 0; n<input[s]->num(); n++){
-	for (int c = 0; c<output_channel; ++c){
-	  for (int o = 0; o<output_size; ++o){
-	    deconvolution(top_filter_data + top_filter[0]->offset(n, c, o),
-			  this->blobs_[s]->mutable_cpu_data(),
-			  eq_filter_data + eq_filter->offset(n, c, o),
-			  num_output_, height_out, width_out,
-			  channels_, kernel_size_, pad_, stride_);
-	  } //output num
-	} //output channels
-      } // for each input image
-      this->eq_filter_.push_back(eq_filter);
-    } // input sources
+    int height_out = (height_ + 2 * pad_ - kernel_size_) / stride_ + 1;
+    int width_out = (width_ + 2 * pad_ - kernel_size_) / stride_ + 1;
+
+    for (int n = 0; n<input[0]->num(); n++){
+        for (int c = 0; c<output_channel; ++c){
+            for (int o = 0; o<output_size; ++o){
+                deconvolution(top_filter_data + top_filter->offset(n, c, o),
+                    this->blobs_[0]->mutable_cpu_data(),
+                    eq_filter_data + this->eq_filter_->offset(n, c, o),
+                    num_output_, height_out, width_out,
+                    channels_, kernel_size_, pad_, stride_);
+            } //output num
+        } //output channels
+    } // for each input image
   }
 
   template <typename Dtype>
@@ -308,7 +277,7 @@ namespace caffe {
   //output: the deconvolution results, of the same size of input image, a 3-dimensional matrix
   //	- channels is the number of channels in the input image
   template <typename Dtype>
-  void ConvolutionLayer<Dtype>::deconvolution(Dtype* response,
+  void ConvolutionLayer<Dtype>::deconvolution(const Dtype* response,
 					      Dtype* filter,
 					      Dtype* output,
 					      int output_num,
