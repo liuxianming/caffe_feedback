@@ -46,7 +46,7 @@ namespace caffe{
   template<typename Dtype>
   void FeedbackNet<Dtype>::Visualize(int startLayerIdx, int startChannelIdx, int startOffset, int endLayerIdx){
     //The visualization must be completed by performing Forward() in advance
-    if (forwardCompleteFlag == false) {
+    if (this->forwardCompleteFlag == false) {
         LOG(ERROR)<<"[Error] Have to input image into the network to complete visualization";
         return;
     }
@@ -69,7 +69,7 @@ namespace caffe{
     //2. For each layer in the vector, calculate the eq_filter_ for each layer
     UpdateEqFilter();
     //3. Finally, get the eq_filter_ at the end layer as the output;
-    Blob<Dtype>* eq_filter_output  = this->eq_filter_top_[this->endLayerIdx_]->eq_filter();
+    Blob<Dtype>* eq_filter_output  = (this->eq_filter_top_[this->endLayerIdx_])->eq_filter();
     //4. re-organize the eq_filter_output to get this->visualization_
     Blob<Dtype>* input_blob = (this->bottom_vecs_[endLayerIdx])[0];
     this->visualization_ = new Blob<Dtype>(input_blob->num(), input_blob->channels(),
@@ -83,7 +83,7 @@ namespace caffe{
     memset(_visualization_mask, 0, sizeof(Dtype) * output_length);
     if (startOffset == -1){
         //use all the outputs to visualize
-        for(int i = 0; i<eoutput_length; ++i) {
+        for(int i = 0; i<output_length; ++i) {
             _visualization_mask[i] = (Dtype)1.;
         }
     }
@@ -151,7 +151,7 @@ namespace caffe{
   void FeedbackNet<Dtype>::DrawVisualization(string dir) {
     std::ostringstream convert;
     for (int n = 0; n<visualization_->num(); n++) {
-        convert<<dir<<s<<"_"<<n;
+        convert<<dir<<n;
         string filename = convert.str();
         if (visualization_->channels() == 3 || visualization_->channels() == 1){
             //Visualize as RGB / Grey image
