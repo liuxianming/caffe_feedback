@@ -104,6 +104,8 @@ namespace caffe {
   template <typename Dtype>
   void InnerProductLayer<Dtype>::UpdateEqFilter(const Blob<Dtype>* top_filter,
       const vector<Blob<Dtype>*>& input){
+    LOG(INFO)<<"Calculating Feedback Weights for "<<this->layer_param_.name();
+
     if (top_filter == NULL){
         //the first layer in the chain, initialize using the layer weights
         int inputsize = input[0]->count() / input[0]->num();

@@ -188,6 +188,8 @@ namespace caffe {
   template <typename Dtype>
   void ConvolutionLayer<Dtype>::UpdateEqFilter(const Blob<Dtype>* top_filter,
       const vector<Blob<Dtype>*>& input) {
+    LOG(INFO)<<"Calculating Feedback Weights for "<<this->layer_param_.name();
+
     int input_size = channels_ * width_ * height_;
     int output_size = top_filter->height();
     int output_channel = top_filter->channels();

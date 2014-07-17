@@ -29,10 +29,12 @@ namespace caffe{
     // Default parameter:
     // startChannelIdx = 0
     // endLayerIdx = 0: using the data layer as visualization target
-    void Visualize(int startLayerIdx, int startChannelIdx = 0, int endLayerIdx = 0);
+    // startOffset: visualize the neuron at specific position (pos = startOffset)
+    //  if startOffset == -1 (by default), use all the output neurons.
+    void Visualize(int startLayerIdx, int startChannelIdx = 0, int startOffset = -1, int endLayerIdx = 0);
 
     // Search the layer list and get the index
-    void Visualize(string startLayer, int startChannelIdx = -1, string endLayer = "data");
+    void Visualize(string startLayer, int startChannelIdx = 0, int startOffset = -1, string endLayer = "data");
 
     inline vector<Blob<Dtype>* > GetVisualization() {return visualization_;}
 
@@ -44,22 +46,26 @@ namespace caffe{
     void InitVisualization();
     //void InitFeedback();
 
+    //Generate the top_filter_ for the startLayer of visualization
+    void generateStartTopFilter();
+
   protected:
-    //The vector stores the visualization results
-    //vector: input source;
+    //Stores the visualization results
     //num: input images of minibatch;
     //channels, width, height: size of image (channel by default is rgb)
-    vector<Blob<Dtype>* > visualization_;
-
-    //The vector stores all the layers need to perform feedbacks
-    vector<shared_ptr<Layer<Dtype> > > fLayers_;
+    Blob<Dtype>* visualization_;
     
     //The vector stores the ptr list of eq_filter for each feedback_layer in fLayers_
+    //If the end layer idx of visualization is k,
+    //then the visualization results are eq_filter_top_[k]
     vector<Blob<Dtype>* > eq_filter_top_;
 
     int startLayerIdx_;
     int startChannelIdx_;
     int endLayerIdx_;
+
+    //The synthesized top_filter for the start layer of visualization
+    Blob<Dtype>* start_top_filter_;
   };
 } // namespace caffe
 

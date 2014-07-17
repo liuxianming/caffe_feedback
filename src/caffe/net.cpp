@@ -33,6 +33,7 @@ Net<Dtype>::Net(const string& param_file) {
 
 template <typename Dtype>
 void Net<Dtype>::Init(const NetParameter& in_param) {
+  forwardCompleteFlag = false;
   // Create a copy of in_param with splits added where necessary.
   NetParameter param;
   InsertSplits(in_param, &param);
@@ -240,6 +241,9 @@ void Net<Dtype>::GetLearningRateAndWeightDecay() {
 
 template <typename Dtype>
 const vector<Blob<Dtype>*>& Net<Dtype>::ForwardPrefilled(Dtype* loss) {
+  //set the flag
+  forwardCompleteFlag = true;
+
   if (loss != NULL) {
     *loss = Dtype(0.);
   }

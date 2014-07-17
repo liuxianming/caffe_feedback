@@ -141,6 +141,9 @@ namespace caffe {
     vector<float> params_lr_;
     // the weight decay multipliers
     vector<float> params_weight_decay_;
+
+    //The flag to remember the forward status
+    bool forwardCompleteFlag;
     DISABLE_COPY_AND_ASSIGN(Net);
   };
 
