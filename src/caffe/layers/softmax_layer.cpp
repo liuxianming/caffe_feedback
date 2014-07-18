@@ -88,7 +88,7 @@ void SoftmaxLayer<Dtype>::UpdateEqFilter(const Blob<Dtype>* top_filter,
   LOG(INFO)<<"Calculating Feedback Weights for "<<this->layer_param_.name();
   // The most simple implementation: pass the top_filter through
   this->eq_filter_ = new Blob<Dtype>(top_filter->num(), top_filter->channels(), top_filter->height(), top_filter->width());
-  this->eq_filter_->CopyFrom(& top_filter);
+  this->eq_filter_->CopyFrom( *top_filter);
 }
 
 
