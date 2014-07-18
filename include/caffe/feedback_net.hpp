@@ -36,7 +36,7 @@ namespace caffe{
     // Search the layer list and get the index
     void Visualize(string startLayer, int startChannelIdx = 0, int startOffset = -1, string endLayer = "data");
 
-    inline vector<Blob<Dtype>* > GetVisualization() {return visualization_;}
+    inline Blob<Dtype>* GetVisualization() {return visualization_;}
 
     //draw visualization: draw visualization_ to files, stored in dir
     void DrawVisualization(string dir);
