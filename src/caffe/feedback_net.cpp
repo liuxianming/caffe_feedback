@@ -69,7 +69,7 @@ namespace caffe{
     //2. For each layer in the vector, calculate the eq_filter_ for each layer
     UpdateEqFilter();
     //3. Finally, get the eq_filter_ at the end layer as the output;
-    Blob<Dtype>* eq_filter_output  = (this->eq_filter_top_[this->endLayerIdx_])->eq_filter();
+    Blob<Dtype>* eq_filter_output  = this->eq_filter_top_[this->endLayerIdx_];
     //4. re-organize the eq_filter_output to get this->visualization_
     Blob<Dtype>* input_blob = (this->bottom_vecs_[endLayerIdx])[0];
     this->visualization_ = new Blob<Dtype>(input_blob->num(), input_blob->channels(),
@@ -118,7 +118,8 @@ namespace caffe{
     Blob<Dtype>* _top_output_blob = (this->top_vecs_[startLayerIdx_])[0];
     int _input_num = _top_output_blob->channels() * _top_output_blob->height() * _top_output_blob->width();
     int _output_num = _top_output_blob->height() * _top_output_blob->width();
-    this->start_top_filter_ = new Blob<Dtype>(this->bottom_vecs_[0]->num(), 1, _output_num, _input_num);
+    int _img_num = (this->bottom_vecs_[0])->num();
+    start_top_filter_ = new Blob<Dtype>(_img_num, 1, _output_num, _input_num);
 
     //Initialize the value of start_top_filter_
     Dtype* start_top_filter_data = this->start_top_filter_->mutable_cpu_data();

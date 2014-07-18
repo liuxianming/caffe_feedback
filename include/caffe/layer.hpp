@@ -60,6 +60,12 @@ class Layer {
   // Writes the layer parameter to a protocol buffer
   virtual void ToProto(LayerParameter* param, bool write_diff = false);
 
+  // The function to update the eq_filter_ given current layer and the filter of upper layers
+  // top_filter: the eq_filter from the top layer
+  // input: input from the bottom layer(s)
+  virtual void UpdateEqFilter(const Blob<Dtype>* top_filter,
+      const vector<Blob<Dtype>*>& input){}
+
  protected:
   // The protobuf that stores the layer parameters
   LayerParameter layer_param_;
@@ -88,12 +94,6 @@ class Layer {
     // LOG(WARNING) << "Using CPU code as backup.";
     Backward_cpu(top, propagate_down, bottom);
   }
-
-  // The function to update the eq_filter_ given current layer and the filter of upper layers
-  // top_filter: the eq_filter from the top layer
-  // input: input from the bottom layer(s)
-  virtual void UpdateEqFilter(const Blob<Dtype>* top_filter,
-      const vector<Blob<Dtype>*>& input){}
 
   // eq_filter_: The equivalent weights from current input to final output:
   // That is: final output = eq_filter_ * bottom
