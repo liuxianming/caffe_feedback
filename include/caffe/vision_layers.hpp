@@ -59,6 +59,9 @@ class ConvolutionLayer : public Layer<Dtype> {
   virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
 
+  virtual void UpdateEqFilter(const Blob<Dtype>* top_filter,
+                    const vector<Blob<Dtype>*>& input);
+
  protected:
   /*
    * Added by Xianming Liu, July, 2014
@@ -102,9 +105,6 @@ class ConvolutionLayer : public Layer<Dtype> {
       const bool propagate_down, vector<Blob<Dtype>*>* bottom);
   virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
       const bool propagate_down, vector<Blob<Dtype>*>* bottom);
-
-  virtual void UpdateEqFilter(const Blob<Dtype>* top_filter,
-  		  const vector<Blob<Dtype>*>& input);
 
   int kernel_size_;
   int stride_;
@@ -203,6 +203,9 @@ class InnerProductLayer : public Layer<Dtype> {
   virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
 
+  virtual void UpdateEqFilter(const Blob<Dtype>* top_filter,
+                    const vector<Blob<Dtype>*>& input);
+
  protected:
   virtual Dtype Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
@@ -213,8 +216,6 @@ class InnerProductLayer : public Layer<Dtype> {
   virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
       const bool propagate_down, vector<Blob<Dtype>*>* bottom);
 
-  virtual void UpdateEqFilter(const Blob<Dtype>* top_filter,
-  		  const vector<Blob<Dtype>*>& input);
 
   int M_;
   int K_;
@@ -337,6 +338,9 @@ class PoolingLayer : public Layer<Dtype> {
   virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
 
+  virtual void UpdateEqFilter(const Blob<Dtype>* top_filter,
+                  const vector<Blob<Dtype>*>& input);
+
   //Get the max_pooling mask for each input image
   inline shared_ptr<Blob<Dtype> >  GetMask(){
 	  return this->blobs_[0];
@@ -351,8 +355,6 @@ class PoolingLayer : public Layer<Dtype> {
       const bool propagate_down, vector<Blob<Dtype>*>* bottom);
   virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
       const bool propagate_down, vector<Blob<Dtype>*>* bottom);
-  virtual void UpdateEqFilter(const Blob<Dtype>* top_filter,
-		  const vector<Blob<Dtype>*>& input);
 
   int kernel_size_;
   int stride_;
@@ -376,6 +378,9 @@ class SoftmaxLayer : public Layer<Dtype> {
       : Layer<Dtype>(param) {}
   virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
+
+  virtual void UpdateEqFilter(const Blob<Dtype>* top_filter,
+                    const vector<Blob<Dtype>*>& input);
 
  protected:
   virtual Dtype Forward_cpu(const vector<Blob<Dtype>*>& bottom,
