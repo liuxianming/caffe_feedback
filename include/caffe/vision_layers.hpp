@@ -365,8 +365,7 @@ class PoolingLayer : public Layer<Dtype> {
   int pooled_height_;
   int pooled_width_;
   Blob<Dtype> rand_idx_;
-  //For pooling layer, using the variable blobs_ to store the pooling mask
-  //shared_ptr<Blob<Dtype> > pooling_mask_;
+  shared_ptr<Blob<Dtype> > pooling_mask_;
 };
 
 /* SoftmaxLayer

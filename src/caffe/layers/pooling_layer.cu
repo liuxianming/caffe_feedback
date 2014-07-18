@@ -151,7 +151,7 @@ Dtype PoolingLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
   const Dtype* bottom_data = bottom[0]->gpu_data();
   Dtype* top_data = (*top)[0]->mutable_gpu_data();
   int count = (*top)[0]->count();
-  Dtype* mask_data = this->blobs_[0]->mutable_gpu_data();
+  Dtype* mask_data = pooling_mask_->mutable_gpu_data();
   switch (this->layer_param_.pooling_param().pool()) {
   case PoolingParameter_PoolMethod_MAX:
     // NOLINT_NEXT_LINE(whitespace/operators)

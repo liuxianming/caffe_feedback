@@ -44,9 +44,10 @@ namespace caffe {
 			pooled_width_);
     }
 
-    shared_ptr<Blob<Dtype> > pooling_mask(
-					  new Blob<Dtype>(bottom[0]->num(), this->channels_, this->pooled_height_, this->pooled_width_));
-    this->blobs_.push_back(pooling_mask);
+    shared_ptr<Blob<Dtype> > pooling_mask(new Blob<Dtype>(bottom[0]->num(), this->channels_,
+        this->pooled_height_, this->pooled_width_));
+    this->pooling_mask_ = pooling_mask;
+    //this->blobs_.push_back(pooling_mask);
   }
 
   // TODO(Yangqing): Is there a faster way to do pooling in the channel-first
@@ -56,7 +57,7 @@ namespace caffe {
 					 vector<Blob<Dtype>*>* top) {
     const Dtype* bottom_data = bottom[0]->cpu_data();
     Dtype* top_data = (*top)[0]->mutable_cpu_data();
-    Dtype* mask_data = this->blobs_[0]->mutable_cpu_data();
+    Dtype* mask_data = pooling_mask_->mutable_cpu_data();
     // Different pooling methods. We explicitly do the switch outside the for
     // loop to save time, although this results in more codes.
     int top_count = (*top)[0]->count();
@@ -92,7 +93,7 @@ namespace caffe {
 	  // Change to the next channel, the offset is got by calling blob.offset(n, c, w, h) function
 	  bottom_data += bottom[0]->offset(0, 1);
 	  top_data += (*top)[0]->offset(0, 1);
-	  mask_data += this->blobs_[0]->offset(0,1);
+	  mask_data += pooling_mask_->offset(0,1);
 	}
       }
       break;
@@ -245,20 +246,20 @@ namespace caffe {
 
     //Calculation of eq_filter_
     const Dtype* top_filter_data = top_filter->cpu_data();
-    const Dtype* mask_data = this->blobs_[0]->cpu_data();
+    const Dtype* mask_data = pooling_mask_->cpu_data();
     Dtype* eq_filter_data = this->eq_filter_->mutable_cpu_data();
 
     //Initialize as all 0
     memset(eq_filter_data, 0, sizeof(Dtype) * this->eq_filter_->count());
 
     for (int n = 0; n<input[0]->num(); n++){
-        for (int c = 0; c< this->blobs_[0]->channels(); c++){
-            for (int offset = 0; offset < this->blobs_[0]->height() * this->blobs_[0]->width(); ++offset){
+        for (int c = 0; c< pooling_mask_->channels(); c++){
+            for (int offset = 0; offset < pooling_mask_->height() * pooling_mask_->width(); ++offset){
                 int mask_offset = static_cast<int>(*(mask_data + offset));
                 *(eq_filter_data + mask_offset) = *(top_filter_data+offset);
             }
             //adjust the mask_data ptr to the next channel
-            mask_data += this->blobs_[0]->offset(0,1);
+            mask_data += pooling_mask_->offset(0,1);
             eq_filter_data += this->eq_filter_->offset(0,1);
         }	//for each channel
     }	//for each image in mini-batch
