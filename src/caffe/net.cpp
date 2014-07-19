@@ -13,6 +13,8 @@
 #include "caffe/util/insert_splits.hpp"
 #include "caffe/util/upgrade_proto.hpp"
 
+#include "caffe/proto/caffe.pb.h"
+
 using std::pair;
 using std::map;
 using std::set;

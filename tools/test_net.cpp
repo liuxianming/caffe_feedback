@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     Caffe::set_mode(Caffe::CPU);
   }
 
-  Net<float> caffe_test_net(argv[1]);
+  FeedbackNet<float> caffe_test_net(argv[1]);
   caffe_test_net.CopyTrainedLayersFrom(argv[2]);
 
   if( DEBUG )

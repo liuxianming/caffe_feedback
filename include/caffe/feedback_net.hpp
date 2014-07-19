@@ -41,9 +41,10 @@ namespace caffe{
     //draw visualization: draw visualization_ to files, stored in dir
     void DrawVisualization(string dir);
 
-  protected:
     //Member function
     void InitVisualization();
+
+  protected:
     //void InitFeedback();
 
     //Generate the top_filter_ for the startLayer of visualization

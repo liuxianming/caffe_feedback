@@ -39,14 +39,15 @@ int main(int argc, char** argv){
   Blob<float> data_mean;
   data_mean.FromProto(blob_proto);
 
-  LOG(INFO)<<"[Data Mean BLOB SIZE] "<<data_mean.num()<<":"<<data_mean.channels()<<":"<<data_mean.height()<< "*" <<data_mean.width();
-  LOG(INFO)<<"[INPUT BLOB SIZE] "<<input_img->channels()<<":"<<input_img->height()<< "*" <<input_img->width();
+  //start feedback
+  caffe_test_net.Visualize(1, 0);
+  Blob<float>* visualization = caffe_test_net.GetVisualization();
 
   float* imagedata = new float[data_mean.count()];
 
-  for(int n = 0; n<input_img->num(); n++) {
+  for(int n = 0; n<visualization->num(); n++) {
       //visualize the i-th image
-      float* blobdata = input_img->mutable_cpu_data() + input_img->offset(n);
+      float* blobdata = visualization->mutable_cpu_data() + visualization->offset(n);
       for (int i=0; i<data_mean.count(); i++){
           *(imagedata+i) = *(blobdata + i) + *(data_mean.mutable_cpu_data() + i);
       }
@@ -55,9 +56,9 @@ int main(int argc, char** argv){
       string filename = convert.str();
       LOG(INFO)<<"Writing data to image "<<filename<<" ...";
       caffe::WriteDataToImage<float>(filename,
-          input_img->channels(),
-          input_img->height(),
-          input_img->width(),
+          visualization->channels(),
+          visualization->height(),
+          visualization->width(),
           imagedata
       );
   }

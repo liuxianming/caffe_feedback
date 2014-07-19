@@ -144,6 +144,7 @@ namespace caffe {
 
     //The flag to remember the forward status
     bool forwardCompleteFlag;
+
     DISABLE_COPY_AND_ASSIGN(Net);
   };
 

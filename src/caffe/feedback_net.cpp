@@ -62,6 +62,9 @@ namespace caffe{
     this->startLayerIdx_ = startLayerIdx;
     this->endLayerIdx_ = endLayerIdx;
     this->startChannelIdx_ = startChannelIdx;
+    //for debug
+    LOG(INFO)<<"Visualization from ["<<this->layers_[startLayerIdx_]->layer_param().name()
+        <<"] to ["<<this->layers_[endLayerIdx_]->layer_param().name()<<"]";
     //0. Construct the layer index array for visualization
     InitVisualization();
     //1. Construct the mask for the input channel
@@ -118,7 +121,7 @@ namespace caffe{
     Blob<Dtype>* _top_output_blob = (this->top_vecs_[startLayerIdx_])[0];
     int _input_num = _top_output_blob->channels() * _top_output_blob->height() * _top_output_blob->width();
     int _output_num = _top_output_blob->height() * _top_output_blob->width();
-    int _img_num = (this->bottom_vecs_[0])[0]->num();
+    int _img_num = this->blobs_[0]->num();
     start_top_filter_ = new Blob<Dtype>(_img_num, 1, _output_num, _input_num);
 
     //Initialize the value of start_top_filter_
