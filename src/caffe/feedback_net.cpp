@@ -44,14 +44,34 @@ namespace caffe{
   }
 
   template<typename Dtype>
-  void FeedbackNet<Dtype>::Visualize(int startLayerIdx, int startChannelIdx, int startOffset, int endLayerIdx){
+  Blob<Dtype>* FeedbackNet<Dtype>::VisualizeSingleNeuron(int startLayerIdx,
+      int startChannelIdx, int startOffset) {
+    //1. Construct the mask for the input channel
+    generateStartTopFilter(startOffset);
+    //2. For each layer in the vector, calculate the eq_filter_ for each layer
+    UpdateEqFilter();
+    //3. Finally, get the eq_filter_ at the data layer as the output;
+    Blob<Dtype>* eq_filter_output  = this->eq_filter_top_[0];
+    //4. re-organize the eq_filter_output to get this->visualization_
+    Blob<Dtype>* input_blob = (this->blobs_[0]).get();
+    Blob<Dtype>* _visualization = new Blob<Dtype>(input_blob->num(), input_blob->channels(),
+        input_blob->height(), input_blob->width());
+    Dtype* visualization_data_ptr = _visualization->mutable_cpu_data();
+    Dtype* eq_filter_data_ptr = eq_filter_output->mutable_cpu_data();
+    //Copy data
+    memcpy(visualization_data_ptr, eq_filter_data_ptr, sizeof(Dtype)*_visualization->count());
+    return _visualization;
+  }
+
+  template<typename Dtype>
+  void FeedbackNet<Dtype>::Visualize(int startLayerIdx, int startChannelIdx, int startOffset){
     //The visualization must be completed by performing Forward() in advance
     if (this->forwardCompleteFlag == false) {
         LOG(ERROR)<<"[Error] Have to input image into the network to complete visualization";
         return;
     }
-    if(startLayerIdx < 0 || endLayerIdx < 0){
-        LOG(ERROR)<<"Wrong Layer for visualization: "<<startLayerIdx <<"->" <<endLayerIdx;
+    if(startLayerIdx < 0 ){
+        LOG(ERROR)<<"Wrong Layer for visualization: "<<startLayerIdx <<"-> Data Layer" ;
         return;
     }
     if (startLayerIdx == 0){
@@ -60,87 +80,89 @@ namespace caffe{
     }
 
     this->startLayerIdx_ = startLayerIdx;
-    this->endLayerIdx_ = endLayerIdx;
     this->startChannelIdx_ = startChannelIdx;
     //for debug
     LOG(INFO)<<"Visualization from ["<<this->layers_[startLayerIdx_]->layer_param().name()
-        <<"] to ["<<this->layers_[endLayerIdx_]->layer_param().name()<<"]";
+        <<"] to [Data Layer]";
     //0. Construct the layer index array for visualization
     InitVisualization();
-    //1. Construct the mask for the input channel
-    generateStartTopFilter();
-    //2. For each layer in the vector, calculate the eq_filter_ for each layer
-    UpdateEqFilter();
-    //3. Finally, get the eq_filter_ at the end layer as the output;
-    Blob<Dtype>* eq_filter_output  = this->eq_filter_top_[this->endLayerIdx_];
-    //4. re-organize the eq_filter_output to get this->visualization_
-    Blob<Dtype>* input_blob = (this->bottom_vecs_[endLayerIdx])[0];
-    this->visualization_ = new Blob<Dtype>(input_blob->num(), input_blob->channels(),
-        input_blob->height(), input_blob->width());
-    Dtype* visualization_data_ptr = this->visualization_->mutable_cpu_data();
-    Dtype* eq_filter_data_ptr = eq_filter_output->mutable_cpu_data();
-    //4.1 Generate the visualization mask, given the startOffset
-    int input_length = eq_filter_output->width();
-    int output_length = eq_filter_output->height();
-    Dtype* _visualization_mask = new Dtype[output_length];
-    memset(_visualization_mask, 0, sizeof(Dtype) * output_length);
-    if (startOffset == -1){
-        //use all the outputs to visualize
-        for(int i = 0; i<output_length; ++i) {
-            _visualization_mask[i] = (Dtype)1.;
+    if(startOffset >= 0) {
+        this->visualization_ = VisualizeSingleNeuron(startLayerIdx_, startChannelIdx_, startOffset);
+    }
+    else if(startOffset == -1){
+        //Visualize the neurons of the whole channels
+        //especially designed for convolutional layers
+        //Create visualization variable
+        Blob<Dtype>* input_blob = (this->blobs_[0]).get();
+        Blob<Dtype>* _visualization = new Blob<Dtype>(input_blob->num(), input_blob->channels(),
+            input_blob->height(), input_blob->width());
+        memset(_visualization->mutable_cpu_data(), 0, sizeof(Dtype)*_visualization->count());
+
+        Blob<Dtype>* _filter_output = (this->top_vecs_[startLayerIdx_])[0];
+        int _output_num = _filter_output->height() * _filter_output->width();
+        for(int index = 0; index < _output_num; ++index){
+            //Plot information every 100 neurons
+            if(index%100 == 0) {
+                LOG(INFO)<<"Processing "<<index<<" neurons";
+            }
+            Blob<Dtype>* _single_visualization =
+                VisualizeSingleNeuron(startLayerIdx_, startChannelIdx_, index);
+            //Add the values together
+            for(int n = 0; n<_single_visualization->num(); ++n){
+                Dtype _output_value = *(_filter_output->mutable_cpu_data() +
+                    _filter_output->offset(n, startChannelIdx_) + index);
+                Dtype* _single_visualization_ptr = _single_visualization->mutable_cpu_data() + _single_visualization->offset(n);
+                Dtype* _visualization_ptr = _visualization->mutable_cpu_data() + this->visualization_->offset(n);
+                caffe_cpu_vsum<Dtype>(_single_visualization->width()*_single_visualization->height(),
+                    _output_value, _single_visualization_ptr,
+                    (Dtype)1., _visualization_ptr);
+            }
         }
+        this->visualization_ = _visualization;
     }
-    else {
-        _visualization_mask[startOffset] = (Dtype) 1.;
-    }
-    //4.2 Inner product
-    for (int n = 0; n < this->visualization_->num(); ++n) {
-        //using caffe_cpu_gemm() function
 
-        caffe::caffe_cpu_gemm(CblasTrans, CblasNoTrans, 1, input_length, output_length,
-                              (Dtype)1., eq_filter_data_ptr,
-                              _visualization_mask, (Dtype)0.,
-                              visualization_data_ptr);
-        eq_filter_data_ptr += eq_filter_output->offset(1,0);
-        visualization_data_ptr += this->visualization_->offset(1,0);
+    //Normalization:
+    for(int n = 0; n<this->visualization_->num(); ++n) {
+        ImageNormalization<Dtype>(this->visualization_->mutable_cpu_data() + this->visualization_->offset(n),
+            this->visualization_->offset(1), (Dtype)128);
     }
-    //4.3 Reshape the visualization - nothing to do
   }
 
   template<typename Dtype>
-  void FeedbackNet<Dtype>::Visualize(string startLayer, int startChannelIdx, int startOffset, string endLayer){
+  void FeedbackNet<Dtype>::Visualize(string startLayer, int startChannelIdx, int startOffset){
     int startLayerIdx = this->layer_names_index_[startLayer];
-    int endLayerIdx = this->layer_names_index_[endLayer];
 
-    this->Visualize(startLayerIdx, startChannelIdx, startOffset, endLayerIdx);
+    this->Visualize(startLayerIdx, startChannelIdx, startOffset);
   }
 
   template<typename Dtype>
-  void FeedbackNet<Dtype>::generateStartTopFilter(){
+  void FeedbackNet<Dtype>::generateStartTopFilter(int startOffset){
     //Generate the top_filter_ for the start layer of visualization
+    //The output of the top_filter is only one neuron,
     Blob<Dtype>* _top_output_blob = (this->top_vecs_[startLayerIdx_])[0];
-    int _input_num = _top_output_blob->channels() * _top_output_blob->height() * _top_output_blob->width();
-    int _output_num = _top_output_blob->height() * _top_output_blob->width();
-    int _img_num = this->blobs_[0]->num();
-    start_top_filter_ = new Blob<Dtype>(_img_num, 1, _output_num, _input_num);
+    long _input_num = _top_output_blob->channels() * _top_output_blob->height() * _top_output_blob->width();
+    long channel_offset = _top_output_blob->height() * _top_output_blob->width();
+    long _img_num = this->blobs_[0]->num();
+
+    //    size_t tempsize = _img_num * _input_num * _output_num;
+    //    LOG(INFO)<<_input_num<<"*"<<_output_num<<"*"<<_img_num<<"="<<tempsize;
+
+    start_top_filter_ = new Blob<Dtype>(_img_num, 1, 1, _input_num);
 
     //Initialize the value of start_top_filter_
-    Dtype* start_top_filter_data = this->start_top_filter_->mutable_cpu_data();
-    int channel_offset = _output_num;
+    Dtype* start_top_filter_data = start_top_filter_->mutable_cpu_data();
 
     memset(start_top_filter_data, 0, sizeof(Dtype) * start_top_filter_->count());
 
     for (int n = 0; n<start_top_filter_->num(); n++) {
-        for(int i = 0; i<_output_num; i++) {
-            *(start_top_filter_data + channel_offset * this->startChannelIdx_ + i * _input_num + i) = Dtype(1.);
-        }
+        *(start_top_filter_data + channel_offset * this->startChannelIdx_ + startOffset) = Dtype(1.);
         start_top_filter_data += start_top_filter_->offset(1, 0);
     }
-  }
+}
 
   template<typename Dtype>
   void FeedbackNet<Dtype>::UpdateEqFilter(){
-    for(int i = this->startLayerIdx_; i > this->endLayerIdx_; --i){
+    for(int i = this->startLayerIdx_; i > 0; --i){
         //Perform UpdataEqFilter()
         if (i == this->startLayerIdx_){
             this->layers_[i]->UpdateEqFilter(this->start_top_filter_, this->bottom_vecs_[i]);
@@ -148,6 +170,8 @@ namespace caffe{
         else{
             this->layers_[i]->UpdateEqFilter(this->eq_filter_top_[i], this->bottom_vecs_[i]);
         }
+        //Update pointer
+        this->eq_filter_top_[i-1] = this->layers_[i]->eq_filter();
     }
   }
 

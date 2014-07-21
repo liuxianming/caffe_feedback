@@ -238,6 +238,9 @@ void caffe_cpu_scale(const int n, const Dtype alpha, const Dtype *x, Dtype* y);
 template <typename Dtype>
 void caffe_gpu_scale(const int n, const Dtype alpha, const Dtype *x, Dtype* y);
 
+template <typename Dtype>
+void caffe_cpu_vsum(const int n, const Dtype alpha, const Dtype* x, const Dtype beta, Dtype* y);
+
 }  // namespace caffe
 
 

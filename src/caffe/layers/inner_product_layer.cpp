@@ -121,9 +121,7 @@ namespace caffe {
 
         int inputsize = input[0]->count() / input[0]->num();
 
-        if(this->eq_filter_ == NULL){
-            this->eq_filter_ = new Blob<Dtype>(input[0]->num(), 1, top_output_num, inputsize);
-        }
+        this->eq_filter_ = new Blob<Dtype>(input[0]->num(), 1, top_output_num, inputsize);
 
         const Dtype* top_filter_data = top_filter->cpu_data();
 

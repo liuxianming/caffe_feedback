@@ -3,6 +3,7 @@
 #include <boost/math/special_functions/next.hpp>
 #include <boost/random.hpp>
 #include <cublas_v2.h>
+#include <cblas.h>
 
 #include <limits>
 
@@ -488,5 +489,16 @@ void caffe_gpu_scale<double>(const int n, const double alpha, const double *x,
   CUBLAS_CHECK(cublasDcopy(Caffe::cublas_handle(), n, x, 1, y, 1));
   CUBLAS_CHECK(cublasDscal(Caffe::cublas_handle(), n, &alpha, y, 1));
 }
+
+template<>
+void caffe_cpu_vsum<double>(const int n, const double alpha, const double* x, const double beta, double* y){
+  cblas_daxpy(n, alpha, x, 1, y, 1);
+}
+
+template<>
+void caffe_cpu_vsum<float>(const int n, const float alpha, const float* x, const float beta, float* y){
+  cblas_saxpy(n, alpha, x, 1, y, 1);
+}
+
 
 }  // namespace caffe

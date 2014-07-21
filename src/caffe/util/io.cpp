@@ -220,4 +220,34 @@ void WriteDataToImage<double>(string filename, const int channel, const int heig
   cv::imwrite(filename, *img);
 }
 
+template<>
+void ImageNormalization<float>(float* imgData, int len, float mean){
+  float max = (float)0.;
+  float min = imgData[0];
+  for (int i = 0; i<len; i++){
+      float val = imgData[i];
+      if(val < min) min = val;
+      if(val > max) max = val;
+  }
+  //Normalization
+  for(int i = 0; i<len; i++) {
+      imgData[i] = (imgData[i] - min) / (max-min) * 255.0;
+  }
+}
+
+template<>
+void ImageNormalization<double>(double* imgData, int len, double mean){
+  double max = (double)0.;
+  double min = imgData[0];
+  for (int i = 0; i<len; i++){
+      double val = imgData[i];
+      if(val < min) min = val;
+      if(val > max) max = val;
+  }
+  //Normalization
+  for(int i = 0; i<len; i++) {
+      imgData[i] = (imgData[i] - min) / (max-min) * 255.0;
+  }
+}
+
 }  // namespace caffe

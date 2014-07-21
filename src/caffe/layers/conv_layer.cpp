@@ -188,15 +188,13 @@ namespace caffe {
   template <typename Dtype>
   void ConvolutionLayer<Dtype>::UpdateEqFilter(const Blob<Dtype>* top_filter,
       const vector<Blob<Dtype>*>& input) {
-    LOG(INFO)<<"Calculating Feedback Weights for "<<this->layer_param_.name();
+    //LOG(INFO)<<"Calculating Feedback Weights for "<<this->layer_param_.name();
 
     int input_size = channels_ * width_ * height_;
     int output_size = top_filter->height();
     int output_channel = top_filter->channels();
 
-    if(this->eq_filter_ == NULL) {
-        this->eq_filter_ = new Blob<Dtype>(input[0]->num(), output_channel, output_size, input_size);
-    }
+    this->eq_filter_ = new Blob<Dtype>(input[0]->num(), output_channel, output_size, input_size);
     Dtype* eq_filter_data = this->eq_filter_->mutable_cpu_data();
 
     const Dtype* top_filter_data = top_filter->cpu_data();
@@ -299,8 +297,8 @@ namespace caffe {
       for(int h = 0; h<output_height; ++h) {
 	for(int w = 0; w<output_width; ++w){
 	  int s_offset = c * s_width * s_height                       	//layer
-	    + h * stride * s_width  						    	//stride rows
-	    + w * stride;											//stride offset
+	    + h * stride * s_width  					//stride rows
+	    + w * stride;						//stride offset
 	  *(s_response + s_offset) = *response;
 	  response += 1;
 	}// each column
@@ -315,8 +313,8 @@ namespace caffe {
       int original_height = (s_height + 2*deconv_pad - kernel_size + 1) - 2 * pad;
       int original_width = (s_width + 2*deconv_pad - kernel_size + 1) - 2 * pad;
       Dtype* deconv_output = new Dtype[channels
-				       * original_height
-				       * original_width];
+				       * (original_height + 2*pad)
+				       * (original_width + 2*pad)];
       convolution(s_response, t_filter, deconv_output, channels, output_num, s_height, s_width, kernel_size, deconv_pad, 1);
       //4. un-padding
       for (int c = 0; c<channels; ++c) {

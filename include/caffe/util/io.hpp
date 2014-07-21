@@ -84,6 +84,9 @@ void hdf5_save_nd_dataset(
 template<typename Dtype>
 void WriteDataToImage(string filename, const int channel, const int height, const int width, Dtype* data);
 
+template<typename Dtype>
+void ImageNormalization(Dtype* imgData, int len, Dtype mean);
+
 }  // namespace caffe
 
 #endif   // CAFFE_UTIL_IO_H_

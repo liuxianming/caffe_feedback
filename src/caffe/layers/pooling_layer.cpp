@@ -239,10 +239,7 @@ namespace caffe {
     int top_output_num = top_filter->height();
     int top_output_channel = top_filter->channels();
 
-    if (this->eq_filter_ == NULL){
-      //If it is a null pointer (not initialized), create mem space
-      this->eq_filter_ = new Blob<Dtype>(M_, top_output_channel, top_output_num, K_);
-    }
+    this->eq_filter_ = new Blob<Dtype>(M_, top_output_channel, top_output_num, K_);
 
     //Calculation of eq_filter_
     const Dtype* top_filter_data = top_filter->cpu_data();

@@ -40,7 +40,8 @@ int main(int argc, char** argv){
   data_mean.FromProto(blob_proto);
 
   //start feedback
-  caffe_test_net.Visualize(1, 0);
+  caffe_test_net.Visualize(1, 0, -1);
+//  caffe_test_net.Visualize(1, 0, 528);
   Blob<float>* visualization = caffe_test_net.GetVisualization();
 
   float* imagedata = new float[data_mean.count()];
@@ -49,7 +50,8 @@ int main(int argc, char** argv){
       //visualize the i-th image
       float* blobdata = visualization->mutable_cpu_data() + visualization->offset(n);
       for (int i=0; i<data_mean.count(); i++){
-          *(imagedata+i) = *(blobdata + i) + *(data_mean.mutable_cpu_data() + i);
+//          *(imagedata+i) = *(blobdata + i) + *(data_mean.mutable_cpu_data() + i);
+          *(imagedata+i) = *(blobdata + i) ;
       }
       std::ostringstream convert;
       convert << n <<".jpg";

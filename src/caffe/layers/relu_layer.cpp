@@ -44,12 +44,10 @@ namespace caffe {
     LOG(INFO)<<"Calculating Feedback Weights for "<<this->layer_param_.name();
     //Initialization:
     //The size of eq_filter_ is the same as top_filter
-    if (this->eq_filter_ == NULL){
-        this->eq_filter_ = new Blob<Dtype>(top_filter->num(),
-            top_filter->channels(),
-            top_filter->height(),
-            top_filter->width());
-    }
+    this->eq_filter_ = new Blob<Dtype>(top_filter->num(),
+                top_filter->channels(),
+                top_filter->height(),
+                top_filter->width());
 
     this->eq_filter_->CopyFrom(*top_filter);
 
