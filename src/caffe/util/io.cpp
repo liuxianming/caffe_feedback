@@ -231,7 +231,7 @@ void ImageNormalization<float>(float* imgData, int len, float mean){
   }
   //Normalization
   for(int i = 0; i<len; i++) {
-      imgData[i] = (imgData[i] - min) / (max-min) * 255.0;
+      imgData[i] = (imgData[i] - min) / (max-min) * (255.0 - mean) + mean;
   }
 }
 
@@ -246,7 +246,7 @@ void ImageNormalization<double>(double* imgData, int len, double mean){
   }
   //Normalization
   for(int i = 0; i<len; i++) {
-      imgData[i] = (imgData[i] - min) / (max-min) * 255.0;
+      imgData[i] = (imgData[i] - min) / (max-min) * (255.0 - mean) + mean;
   }
 }
 

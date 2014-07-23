@@ -51,8 +51,8 @@ namespace caffe{
     Blob<Dtype>* input_blob = (this->blobs_[0]).get();
     Blob<Dtype>* _visualization = new Blob<Dtype>(input_blob->num(), input_blob->channels(),
         input_blob->height(), input_blob->width());
-    _visualization->CopyFrom(*eq_filter_output, false, true);
-    //memcpy(_visualization->mutable_cpu_data(), eq_filter_output->cpu_data(), sizeof(Dtype)*eq_filter_output->count());
+    //_visualization->CopyFrom(*eq_filter_output, false, true);
+    memcpy(_visualization->mutable_cpu_data(), eq_filter_output->cpu_data(), sizeof(Dtype)*eq_filter_output->count());
     return _visualization;
   }
 
@@ -93,7 +93,7 @@ namespace caffe{
             for(int n = 0; n<this->visualization_->num();++n){
                 Dtype* img_data_ptr = this->blobs_[0]->mutable_cpu_data() + this->blobs_[0]->offset(n);
                 Dtype* filter_ptr = this->visualization_->mutable_cpu_data() + this->visualization_->offset(n);
-                int len = this->visualization_->width() * this->visualization_->height();
+                int len = this->visualization_->width() * this->visualization_->height() * this->visualization_->channels();
                 Dtype predicted_output = caffe_cpu_dot<Dtype>(len, img_data_ptr, filter_ptr);
                 Dtype output_val = *((this->top_vecs_[this->startLayerIdx_])[0]->mutable_cpu_data()
                     + (this->top_vecs_[this->startLayerIdx_])[0]->offset(n, this->startChannelIdx_)
@@ -140,7 +140,7 @@ namespace caffe{
     for(int n = 0; n<this->visualization_->num(); ++n) {
         for (int c = 0; c<this->visualization_->channels(); c++) {
             ImageNormalization<Dtype>(this->visualization_->mutable_cpu_data() + this->visualization_->offset(n, c),
-                this->visualization_->offset(0,1), (Dtype)128);
+                this->visualization_->offset(0,1), (Dtype)64);
         }
     }
   }
