@@ -36,13 +36,6 @@ namespace caffe{
      * Since the feedforward processes the layers in layers_ one by one,
      * the feedback will follow the reverse order
      */
-    for (int i = 0; i < this->layers_.size() - 1; ++i) {
-      //for each layer, use the successor layer's eq_filter_ as the top_filter
-      //actually, in this stage, all the ptrs are NULL pointer
-        this->eq_filter_top_.push_back(this->layers_[i+1]->eq_filter());
-    }
-    this->eq_filter_top_.push_back(NULL);
-    //The bottom will adopts the bottom_ vector in the feedforward training process
   }
 
   template<typename Dtype>
@@ -53,15 +46,13 @@ namespace caffe{
     //2. For each layer in the vector, calculate the eq_filter_ for each layer
     UpdateEqFilter();
     //3. Finally, get the eq_filter_ at the data layer as the output;
-    Blob<Dtype>* eq_filter_output  = this->eq_filter_top_[0];
+    Blob<Dtype>* eq_filter_output  = this->eq_filter_top_.back();
     //4. re-organize the eq_filter_output to get this->visualization_
     Blob<Dtype>* input_blob = (this->blobs_[0]).get();
     Blob<Dtype>* _visualization = new Blob<Dtype>(input_blob->num(), input_blob->channels(),
         input_blob->height(), input_blob->width());
-    Dtype* visualization_data_ptr = _visualization->mutable_cpu_data();
-    Dtype* eq_filter_data_ptr = eq_filter_output->mutable_cpu_data();
-    //Copy data
-    memcpy(visualization_data_ptr, eq_filter_data_ptr, sizeof(Dtype)*_visualization->count());
+    _visualization->CopyFrom(*eq_filter_output, false, true);
+    //memcpy(_visualization->mutable_cpu_data(), eq_filter_output->cpu_data(), sizeof(Dtype)*eq_filter_output->count());
     return _visualization;
   }
 
@@ -136,7 +127,7 @@ namespace caffe{
                 Dtype _output_value = *(_filter_output->mutable_cpu_data() +
                     _filter_output->offset(n, startChannelIdx_) + index);
                 Dtype* _single_visualization_ptr = _single_visualization->mutable_cpu_data() + _single_visualization->offset(n);
-                Dtype* _visualization_ptr = _visualization->mutable_cpu_data() + this->visualization_->offset(n);
+                Dtype* _visualization_ptr = _visualization->mutable_cpu_data() + _visualization->offset(n);
                 caffe_cpu_vsum<Dtype>(_single_visualization->width()*_single_visualization->height(),
                     _output_value, _single_visualization_ptr,
                     (Dtype)1., _visualization_ptr);
@@ -189,13 +180,13 @@ namespace caffe{
   template<typename Dtype>
   void FeedbackNet<Dtype>::UpdateEqFilter(){
     //firs build top_filter vector
-    this->eq_filter_top_[this->startLayerIdx_] = this->start_top_filter_;
+    this->eq_filter_top_.clear();
+    this->eq_filter_top_.push_back(start_top_filter_);
     for(int i = this->startLayerIdx_; i > 0; --i){
-        //The 0-th layer is data layer, no need to perform UpdateEqFilter()
         //Perform UpdataEqFilter()
-        this->layers_[i]->UpdateEqFilter(this->eq_filter_top_[i], this->bottom_vecs_[i]);
+        this->layers_[i]->UpdateEqFilter(this->eq_filter_top_.back(), this->bottom_vecs_[i]);
         //Update pointer
-        this->eq_filter_top_[i-1] = this->layers_[i]->eq_filter();
+        this->eq_filter_top_.push_back(this->layers_[i]->eq_filter());
     }
   }
 

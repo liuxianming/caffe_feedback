@@ -241,10 +241,6 @@ namespace caffe {
     int height_out = (height_ + 2 * pad_ - kernel_size_) / stride_ + 1;
     int width_out = (width_ + 2 * pad_ - kernel_size_) / stride_ + 1;
 
-    //for debug
-    LOG(INFO)<<"[Size of eq_filter: input/output] "<<height_<<"*"<<width_<<"/"
-	     <<height_out <<"*"<<width_out;
-
     for (int n = 0; n<input[0]->num(); n++){
       for (int o = 0; o<output_size; ++o){
 	deconvolution(top_filter_data + top_filter->offset(n) + o * top_filter->width(),           //top_filter
@@ -254,21 +250,24 @@ namespace caffe {
 		      channels_, kernel_size_, pad_, stride_);
 	/****************************************************************************/
 	//Test for deconvolution
-	Dtype error = 0;
-	Dtype* input_data_ptr = input[0]->mutable_cpu_data() + input[0]->offset(n);
-	//calculate convolution:
-	Dtype* conv_rslt = new Dtype[top_filter->width()];
-	convolution(input_data_ptr, this->blobs_[0]->mutable_cpu_data(), conv_rslt, num_output_, 
-		   channels_, height_, width_, 
-		   kernel_size_, pad_, stride_);
-	Dtype conv_score = caffe_cpu_dot<Dtype>(top_filter->width(), conv_rslt, 
-						top_filter_data + top_filter->offset(n) + o* top_filter->width());
-	//calculate using deconvolution
-	Dtype deconv_score = caffe_cpu_dot<Dtype>(input_size, input_data_ptr, 
-						  eq_filter_data + this->eq_filter_->offset(n) + o * input_size);
-	error = (conv_score - deconv_score) * (conv_score - deconv_score);
-	LOG(INFO)<<"Error of eq_filter on Image "<<n<<" at output "<<o<<" is "<<error<<"("<<conv_score<<" / "<<deconv_score<<")";
-	delete [] conv_rslt;
+	bool test_flag = false;
+	if (test_flag) {
+	    Dtype error = 0;
+	    Dtype* input_data_ptr = input[0]->mutable_cpu_data() + input[0]->offset(n);
+	    //calculate convolution:
+	    Dtype* conv_rslt = new Dtype[top_filter->width()];
+	    convolution(input_data_ptr, this->blobs_[0]->mutable_cpu_data(), conv_rslt, num_output_,
+	        channels_, height_, width_,
+	        kernel_size_, pad_, stride_);
+	    Dtype conv_score = caffe_cpu_dot<Dtype>(top_filter->width(), conv_rslt,
+	        top_filter_data + top_filter->offset(n) + o* top_filter->width());
+	    //calculate using deconvolution
+	    Dtype deconv_score = caffe_cpu_dot<Dtype>(input_size, input_data_ptr,
+	        eq_filter_data + this->eq_filter_->offset(n) + o * input_size);
+	    error = (conv_score - deconv_score) * (conv_score - deconv_score);
+	    LOG(INFO)<<"Error of eq_filter on Image "<<n<<" at output "<<o<<" is "<<error<<"("<<conv_score<<" / "<<deconv_score<<")";
+	    delete [] conv_rslt;
+	}
       } //output num
     } // for each input image
   }

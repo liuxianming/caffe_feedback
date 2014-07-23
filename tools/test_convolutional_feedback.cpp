@@ -39,10 +39,10 @@ int main(int argc, char** argv){
   Blob<float> data_mean;
   data_mean.FromProto(blob_proto);
 
-  bool test_flag = true;
+  bool test_flag = false;
 
   //start feedback
-  caffe_test_net.Visualize(1, 1, 5, test_flag);
+  caffe_test_net.Visualize(1, 1, -1, test_flag);
 
   if(test_flag == false){
       Blob<float>* visualization = caffe_test_net.GetVisualization();
@@ -61,9 +61,10 @@ int main(int argc, char** argv){
           string filename = convert.str();
           LOG(INFO)<<"Writing data to image "<<filename<<" ...";
           caffe::WriteDataToImage<float>(filename,
-              visualization->channels(),
-              visualization->height(),
-              visualization->width(),
+              //visualization->channels(),
+              //visualization->height(),
+              //visualization->width(),
+              3, 32, 32,
               imagedata
           );
       }
