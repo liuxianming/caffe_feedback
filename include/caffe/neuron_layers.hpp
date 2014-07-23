@@ -87,6 +87,8 @@ class DropoutLayer : public NeuronLayer<Dtype> {
       const bool propagate_down, vector<Blob<Dtype>*>* bottom);
   virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
       const bool propagate_down, vector<Blob<Dtype>*>* bottom);
+  virtual void UpdateEqFilter(const Blob<Dtype>* top_filter,
+			      const vector<Blob<Dtype>*>& input);
 
   shared_ptr<SyncedMemory> rand_vec_;
   Dtype threshold_;

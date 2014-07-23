@@ -30,9 +30,9 @@ namespace caffe{
     // startChannelIdx = 0
     // startOffset: visualize the neuron at specific position (pos = startOffset)
     //  if startOffset == -1 (by default), use all the output neurons with the output value as weights.
-    void Visualize(int startLayerIdx, int startChannelIdx = 0, int startOffset = -1);
+    void Visualize(int startLayerIdx, int startChannelIdx = 0, int startOffset = -1, bool test_flag = false);
     // Search the layer list and get the index
-    void Visualize(string startLayer, int startChannelIdx = 0, int startOffset = -1);
+    void Visualize(string startLayer, int startChannelIdx = 0, int startOffset = -1, bool test_flag = false);
 
     inline Blob<Dtype>* GetVisualization() {return visualization_;}
 

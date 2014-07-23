@@ -261,6 +261,8 @@ class LRNLayer : public Layer<Dtype> {
       const bool propagate_down, vector<Blob<Dtype>*>* bottom);
   virtual void WithinChannelBackward(const vector<Blob<Dtype>*>& top,
       const bool propagate_down, vector<Blob<Dtype>*>* bottom);
+  virtual void UpdateEqFilter(const Blob<Dtype>* top_filter, 
+			      const vector<Blob<Dtype>*>& input);
 
   int size_;
   int pre_pad_;

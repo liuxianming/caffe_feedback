@@ -126,6 +126,47 @@ namespace caffe {
 			      reinterpret_cast<const Dtype*>(bias_multiplier_->cpu_data()),
 			      (Dtype)1., top_data + (*top)[0]->offset(n));
       }
+      bool test_flag = false;
+      if(test_flag){
+          //test functions including convolution, deconvolution
+          Dtype* _input_data = bottom[0]->mutable_cpu_data() + bottom[0]->offset(n);
+          int _output_num = this->num_output_;
+          int _kernel_size = this->kernel_size_;
+          int _pad = this->pad_;
+          int _stride = this->stride_;
+          Dtype* _filter = this->blobs_[0]->mutable_cpu_data();
+          int _output_len = (*top)[0]->width() * (*top)[0]->height() * (*top)[0]->channels();
+          Dtype* _output_data = new Dtype[_output_len];
+          LOG(INFO)<<"[============ Testing convolution ===========]";
+          convolution(_input_data, _filter, _output_data, _output_num, 
+		      bottom[0]->channels(), bottom[0]->height(), bottom[0]->width(), _kernel_size, _pad, _stride);
+          //calculate the error:
+          int error_count = 0;
+          for(int i = 0; i<_output_len; i++){
+              Dtype _error = _output_data[i]-*((*top)[0]->mutable_cpu_data()+(*top)[0]->offset(n) + i);
+              Dtype error = _error * _error;
+              if (error > (Dtype) 0.01) error_count += 1;
+          }
+          LOG(INFO)<<"Error pixel ratio in testing convolution is: "<<error_count << " / "<<_output_len;
+
+          //Test the deconvolution:
+          LOG(INFO)<<"[=========== Testing deconvolution ==========]";
+          int _input_len = bottom[0]->channels() * bottom[0]->width() * bottom[0]->height();
+          Dtype* _deconv_output_data = new Dtype[_input_len];
+          deconvolution(_output_data, _filter, _deconv_output_data,
+              _output_num, bottom[0]->channels(), bottom[0]->height(), bottom[0]->width(),
+              _kernel_size, _pad, _stride);
+          //calculate error between _input_data and _deconv_output_data
+          error_count = 0;
+          for(int i = 0; i<_input_len; ++i) {
+              Dtype _error = _deconv_output_data[i] - _input_data[i];
+              Dtype error = _error * _error;
+              if(error > 0.1) error_count += 1;
+          }
+          LOG(INFO)<<"Error pixel ratio in testing deconvolution is: "<<error_count << " / "<<_input_len;
+	  delete [] _output_data;
+	  delete [] _deconv_output_data;      
+      }
     }
     return Dtype(0.);
   }
@@ -185,63 +226,83 @@ namespace caffe {
     }
   }
 
+  //Checked, no bugs
   template <typename Dtype>
   void ConvolutionLayer<Dtype>::UpdateEqFilter(const Blob<Dtype>* top_filter,
       const vector<Blob<Dtype>*>& input) {
-    //LOG(INFO)<<"Calculating Feedback Weights for "<<this->layer_param_.name();
-
     int input_size = channels_ * width_ * height_;
     int output_size = top_filter->height();
+    //the final output only has one channel    
     int output_channel = top_filter->channels();
 
     this->eq_filter_ = new Blob<Dtype>(input[0]->num(), output_channel, output_size, input_size);
     Dtype* eq_filter_data = this->eq_filter_->mutable_cpu_data();
-
     const Dtype* top_filter_data = top_filter->cpu_data();
-
     int height_out = (height_ + 2 * pad_ - kernel_size_) / stride_ + 1;
     int width_out = (width_ + 2 * pad_ - kernel_size_) / stride_ + 1;
 
+    //for debug
+    LOG(INFO)<<"[Size of eq_filter: input/output] "<<height_<<"*"<<width_<<"/"
+	     <<height_out <<"*"<<width_out;
+
     for (int n = 0; n<input[0]->num(); n++){
-        for (int c = 0; c<output_channel; ++c){
-            for (int o = 0; o<output_size; ++o){
-                deconvolution(top_filter_data + top_filter->offset(n, c, o),
-                    this->blobs_[0]->mutable_cpu_data(),
-                    eq_filter_data + this->eq_filter_->offset(n, c, o),
-                    num_output_, height_out, width_out,
-                    channels_, kernel_size_, pad_, stride_);
-            } //output num
-        } //output channels
+      for (int o = 0; o<output_size; ++o){
+	deconvolution(top_filter_data + top_filter->offset(n) + o * top_filter->width(),           //top_filter
+		      this->blobs_[0]->mutable_cpu_data(),                                         //convolution filters
+		      eq_filter_data + this->eq_filter_->offset(n) + o * input_size,               //eq_filter
+		      num_output_, height_out, width_out,
+		      channels_, kernel_size_, pad_, stride_);
+	/****************************************************************************/
+	//Test for deconvolution
+	Dtype error = 0;
+	Dtype* input_data_ptr = input[0]->mutable_cpu_data() + input[0]->offset(n);
+	//calculate convolution:
+	Dtype* conv_rslt = new Dtype[top_filter->width()];
+	convolution(input_data_ptr, this->blobs_[0]->mutable_cpu_data(), conv_rslt, num_output_, 
+		   channels_, height_, width_, 
+		   kernel_size_, pad_, stride_);
+	Dtype conv_score = caffe_cpu_dot<Dtype>(top_filter->width(), conv_rslt, 
+						top_filter_data + top_filter->offset(n) + o* top_filter->width());
+	//calculate using deconvolution
+	Dtype deconv_score = caffe_cpu_dot<Dtype>(input_size, input_data_ptr, 
+						  eq_filter_data + this->eq_filter_->offset(n) + o * input_size);
+	error = (conv_score - deconv_score) * (conv_score - deconv_score);
+	LOG(INFO)<<"Error of eq_filter on Image "<<n<<" at output "<<o<<" is "<<error<<"("<<conv_score<<" / "<<deconv_score<<")";
+	delete [] conv_rslt;
+      } //output num
     } // for each input image
   }
 
+
   template <typename Dtype>
   void ConvolutionLayer<Dtype>::filter_transpose(Dtype* filter,
-						 int output_num,
-						 int channels,
-						 int kernel_size,
+						 int output_num, int channels, int kernel_size,
 						 Dtype* t_filter) {
+    int _filter_size = kernel_size * kernel_size;
+    Dtype* _r_filter = new Dtype[_filter_size * channels * output_num];
+    //Reverse the filter: mirror in both horizon and vertical
+    for(int c = 0; c < channels * output_num; ++c) {
+        for(int i = 0; i<_filter_size; ++i) {
+            *(_r_filter + c * _filter_size + i) = *(filter + c * _filter_size + _filter_size - i - 1);
+        }
+    }
     for (int o = 0; o<output_num; ++o){
       for (int c = 0; c<channels; ++c){
 	//memcpy: des, src, num = sizeof(Dtype) * kernel_size * kernel_sizel
-	int filter_offset = (o * channels + c ) * kernel_size * kernel_size ;
-	int t_filter_offset = (c * output_num + o) * kernel_size * kernel_size;
-	memcpy(t_filter + t_filter_offset, filter + filter_offset, sizeof(Dtype) * kernel_size * kernel_size);
+	int filter_offset = (o * channels + c ) * _filter_size ;
+	int t_filter_offset = (c * output_num + o) * _filter_size;
+	memcpy(t_filter + t_filter_offset, _r_filter + filter_offset, sizeof(Dtype) * _filter_size);
       } // for each channel
     } // for each output
-
+    delete [] _r_filter;
   }
 
+  //Checked: no bugs
   template <typename Dtype>
-  void ConvolutionLayer<Dtype>::convolution(Dtype* input,
-					    Dtype* filter,
+  void ConvolutionLayer<Dtype>::convolution(Dtype* input, Dtype* filter,
 					    Dtype* output,
-					    int output_num,
-					    int channels,
-					    int height,
-					    int width,
-					    int kernel_size,
-					    int pad, int stride) {
+					    int output_num, int channels, int height, int width,
+					    int kernel_size, int pad, int stride) {
     int height_out = (height + 2 * pad - kernel_size) / stride + 1;
     int width_out = (width + 2 * pad - kernel_size) / stride + 1;
     int M_ = output_num;
@@ -265,7 +326,6 @@ namespace caffe {
 			  (Dtype)1., filter, col_data,
 			  (Dtype)0., output);
 
-    //cleaning
     delete [] col_data;
   }
 
@@ -277,15 +337,9 @@ namespace caffe {
   //output: the deconvolution results, of the same size of input image, a 3-dimensional matrix
   //	- channels is the number of channels in the input image
   template <typename Dtype>
-  void ConvolutionLayer<Dtype>::deconvolution(const Dtype* response,
-					      Dtype* filter,
-					      Dtype* output,
-					      int output_num,
-					      int output_height,
-					      int output_width,
-					      int channels,
-					      int kernel_size,
-					      int pad, int stride) {
+  void ConvolutionLayer<Dtype>::deconvolution(const Dtype* response, Dtype* filter, Dtype* output,
+					      int output_num, int output_height, int output_width,
+					      int channels, int kernel_size, int pad, int stride) {
     //1. striding and padding
     int s_width = output_width * stride;
     int s_height = output_height * stride;
@@ -310,17 +364,17 @@ namespace caffe {
     //3. convolution: the input channels is the output_num in deconvolution, and vice versa.
     int deconv_pad = kernel_size - 1;
     if (pad > 0){
-      int original_height = (s_height + 2*deconv_pad - kernel_size + 1) - 2 * pad;
-      int original_width = (s_width + 2*deconv_pad - kernel_size + 1) - 2 * pad;
-      Dtype* deconv_output = new Dtype[channels
-				       * (original_height + 2*pad)
-				       * (original_width + 2*pad)];
+      int _height = (s_height + 2*deconv_pad - kernel_size + 1);
+      int original_height = this->height_;
+      int original_width = this->width_;
+      int _width = (s_width + 2*deconv_pad - kernel_size + 1);
+      Dtype* deconv_output = new Dtype[channels * _height * _width];
       convolution(s_response, t_filter, deconv_output, channels, output_num, s_height, s_width, kernel_size, deconv_pad, 1);
       //4. un-padding
       for (int c = 0; c<channels; ++c) {
 	for (int h = 0; h<original_height; ++h){
-	  int offset = c * (original_height + 2 * pad) * (original_width + 2 * pad)
-	    + (original_width + 2 * pad) * h
+	  int offset = c * _height * _width
+	    + _width * (h + pad)
 	    + pad;
 	  int original_offset = c * original_height * original_width
 	    + h * original_width;
@@ -334,6 +388,7 @@ namespace caffe {
     }
     //5. Cleaning:
     delete [] t_filter;
+    delete [] s_response;
   }
 
   INSTANTIATE_CLASS(ConvolutionLayer);

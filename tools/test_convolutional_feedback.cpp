@@ -39,33 +39,37 @@ int main(int argc, char** argv){
   Blob<float> data_mean;
   data_mean.FromProto(blob_proto);
 
+  bool test_flag = true;
+
   //start feedback
-  caffe_test_net.Visualize(1, 0, -1);
-//  caffe_test_net.Visualize(1, 0, 528);
-  Blob<float>* visualization = caffe_test_net.GetVisualization();
+  caffe_test_net.Visualize(1, 1, 5, test_flag);
 
-  float* imagedata = new float[data_mean.count()];
+  if(test_flag == false){
+      Blob<float>* visualization = caffe_test_net.GetVisualization();
 
-  for(int n = 0; n<visualization->num(); n++) {
-      //visualize the i-th image
-      float* blobdata = visualization->mutable_cpu_data() + visualization->offset(n);
-      for (int i=0; i<data_mean.count(); i++){
-//          *(imagedata+i) = *(blobdata + i) + *(data_mean.mutable_cpu_data() + i);
-          *(imagedata+i) = *(blobdata + i) ;
+      float* imagedata = new float[data_mean.count()];
+
+      for(int n = 0; n<visualization->num(); n++) {
+          //visualize the i-th image
+          float* blobdata = visualization->mutable_cpu_data() + visualization->offset(n);
+          for (int i=0; i<data_mean.count(); i++){
+              //          *(imagedata+i) = *(blobdata + i) + *(data_mean.mutable_cpu_data() + i);
+              *(imagedata+i) = *(blobdata + i) ;
+          }
+          std::ostringstream convert;
+          convert << n <<".jpg";
+          string filename = convert.str();
+          LOG(INFO)<<"Writing data to image "<<filename<<" ...";
+          caffe::WriteDataToImage<float>(filename,
+              visualization->channels(),
+              visualization->height(),
+              visualization->width(),
+              imagedata
+          );
       }
-      std::ostringstream convert;
-      convert << n <<".jpg";
-      string filename = convert.str();
-      LOG(INFO)<<"Writing data to image "<<filename<<" ...";
-      caffe::WriteDataToImage<float>(filename,
-          visualization->channels(),
-          visualization->height(),
-          visualization->width(),
-          imagedata
-      );
-  }
 
-  LOG(INFO)<<"Done";
-  //clear
-  delete [] imagedata;
+      LOG(INFO)<<"Done";
+      //clear
+      delete [] imagedata;
+  }
 }

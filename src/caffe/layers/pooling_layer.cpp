@@ -251,13 +251,14 @@ namespace caffe {
 
     for (int n = 0; n<input[0]->num(); n++){
         for (int c = 0; c< pooling_mask_->channels(); c++){
-            for (int offset = 0; offset < pooling_mask_->height() * pooling_mask_->width(); ++offset){
+            for (int offset = 0; offset < pooling_mask_->height() * pooling_mask_->width(); ++offset) {
                 int mask_offset = static_cast<int>(*(mask_data + offset));
                 *(eq_filter_data + mask_offset) = *(top_filter_data+offset);
             }
             //adjust the mask_data ptr to the next channel
             mask_data += pooling_mask_->offset(0,1);
-            eq_filter_data += this->eq_filter_->offset(0,1);
+            //The offset for eq_filter_data is the input-size: input[0]->width() * input[0]->height()
+            eq_filter_data += input[0]->width() * input[0]->height();
         }	//for each channel
     }	//for each image in mini-batch
   }
