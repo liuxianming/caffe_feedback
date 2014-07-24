@@ -231,7 +231,14 @@ void ImageNormalization<float>(float* imgData, int len, float mean){
   }
   //Normalization
   for(int i = 0; i<len; i++) {
-      imgData[i] = (imgData[i] - min) / (max-min) * (255.0 - mean) + mean;
+      if (min == max) {
+          //the situation of all 0's
+          imgData[i] = mean;
+      }
+      else{
+          //imgData[i] = (imgData[i] - min) / (max-min) * (255.0 - mean) + mean;
+          imgData[i] = imgData[i] / max * (255 - mean) + mean;
+      }
   }
 }
 
@@ -246,7 +253,14 @@ void ImageNormalization<double>(double* imgData, int len, double mean){
   }
   //Normalization
   for(int i = 0; i<len; i++) {
-      imgData[i] = (imgData[i] - min) / (max-min) * (255.0 - mean) + mean;
+      if (min == max) {
+          //the situation of all 0's
+          imgData[i] = mean;
+      }
+      else{
+          //imgData[i] = (imgData[i] - min) / (max-min) * (255.0 - mean) + mean;
+          imgData[i] = imgData[i] / max * (255 - mean) + mean;
+      }
   }
 }
 

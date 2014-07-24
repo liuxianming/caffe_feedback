@@ -39,10 +39,10 @@ int main(int argc, char** argv){
   Blob<float> data_mean;
   data_mean.FromProto(blob_proto);
 
-  bool test_flag = false;
+  bool test_flag = true;
 
   //start feedback
-  caffe_test_net.Visualize("relu1", 0, 132, test_flag);
+  caffe_test_net.Visualize("conv2", 16, 50, test_flag);
 
   if(test_flag == false){
       Blob<float>* visualization = caffe_test_net.GetVisualization();

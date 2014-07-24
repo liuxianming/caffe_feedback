@@ -158,7 +158,7 @@ namespace caffe {
     caffe_powx<Dtype>(scale_.count(), scale_data, -beta_, top_data);
 
     //store the weights
-    //this->weights_.CopyFrom(*(*top)[0]);
+    this->weights_.CopyFrom(*(*top)[0]);
     caffe_mul<Dtype>(scale_.count(), top_data, bottom_data, top_data);
 
     return Dtype(0.);
@@ -172,6 +172,17 @@ namespace caffe {
     pool_layer_->Forward(square_top_vec_, &pool_top_vec_);
     power_layer_->Forward(pool_top_vec_, &power_top_vec_);
     product_layer_->Forward(product_bottom_vec_, top);
+
+    //store the weights
+    weights_.CopyFrom(*((*top)[0]), false, true);
+    Dtype* weight_data = weights_.mutable_cpu_data();
+    const Dtype* top_data = (*top)[0]->cpu_data();
+    const Dtype* bottom_data = bottom[0]->cpu_data();
+    for (int n = 0; n<bottom[0]->count(); ++n) {
+        Dtype bottom_val = *(bottom_data + n);
+        Dtype top_val = *(top_data + n);
+        *(weight_data + n) = (bottom_val == 0) ? (Dtype) 0. : (top_val / bottom_val);
+    }
 
     return Dtype(0.);
   }
@@ -267,6 +278,13 @@ namespace caffe {
     this->eq_filter_ = new Blob<Dtype>(top_filter->num(), top_filter->channels(), 
 				       top_filter->height(), top_filter->width());
     this->eq_filter_->CopyFrom( *top_filter);
+
+    Dtype* eq_filter_data = this->eq_filter_->mutable_cpu_data();
+    Dtype* weight_data = this->weights_.mutable_cpu_data();
+
+    for(int n = 0; n<this->eq_filter_->count(); ++n) {
+        *(eq_filter_data + n) = *(eq_filter_data + n) * *(weight_data + n);
+    }
   }
 
   INSTANTIATE_CLASS(LRNLayer);
