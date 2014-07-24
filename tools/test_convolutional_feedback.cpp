@@ -42,7 +42,7 @@ int main(int argc, char** argv){
   bool test_flag = false;
 
   //start feedback
-  caffe_test_net.Visualize("pool1", 0, -1, test_flag);
+  caffe_test_net.Visualize("relu1", 0, 132, test_flag);
 
   if(test_flag == false){
       Blob<float>* visualization = caffe_test_net.GetVisualization();

@@ -277,6 +277,10 @@ class LRNLayer : public Layer<Dtype> {
   // scale_ stores the intermediate summing results
   Blob<Dtype> scale_;
 
+  // weights_ stores all the weights calculated from
+  // caffe_powx<Dtype>(scale_.count(), scale_data, -beta_, top_data);
+  Blob<Dtype> weights_;
+
   // Fields used for normalization WITHIN_CHANNEL
   shared_ptr<SplitLayer<Dtype> > split_layer_;
   vector<Blob<Dtype>*> split_top_vec_;

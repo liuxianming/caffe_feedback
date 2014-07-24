@@ -54,14 +54,17 @@ namespace caffe {
     //add constraints:
     Dtype* eq_filter_data = this->eq_filter_->mutable_cpu_data();
     int inputsize = input[0]->count() / input[0]->num();
-    Dtype* input_data = input[0]->mutable_cpu_data();
+    const Dtype* input_data = input[0]->cpu_data();
 
     for (int m = 0; m<input[0]->num(); m++) {
         for (int offset = 0; offset<inputsize; offset++) {
-            if (*(input_data + offset) < 0){
+            Dtype _value = *(input_data + input[0]->offset(m) + offset);
+            if (_value <= 0){
+                //for debug
+                //LOG(INFO)<<"Neuron in image # "<<m<<" disabled";
                 for(int c = 0; c<this->eq_filter_->channels(); c++){
                     for(int o = 0; o<this->eq_filter_->height(); o++){
-                        *(eq_filter_data + offset + this->eq_filter_->offset(m, c, o)) = 0;
+                        *(eq_filter_data + offset + this->eq_filter_->offset(m, c, o)) = (Dtype) 0.;
                     } // each output
                 } //each channel
             }

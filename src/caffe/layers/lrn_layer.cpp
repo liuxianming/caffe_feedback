@@ -156,6 +156,9 @@ namespace caffe {
 
     // In the end, compute output
     caffe_powx<Dtype>(scale_.count(), scale_data, -beta_, top_data);
+
+    //store the weights
+    //this->weights_.CopyFrom(*(*top)[0]);
     caffe_mul<Dtype>(scale_.count(), top_data, bottom_data, top_data);
 
     return Dtype(0.);
@@ -169,6 +172,7 @@ namespace caffe {
     pool_layer_->Forward(square_top_vec_, &pool_top_vec_);
     power_layer_->Forward(pool_top_vec_, &power_top_vec_);
     product_layer_->Forward(product_bottom_vec_, top);
+
     return Dtype(0.);
   }
 

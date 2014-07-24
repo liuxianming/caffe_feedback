@@ -259,6 +259,8 @@ void caffe_sub<double>(const int n, const double* a, const double* b,
   vdSub(n, a, b, y);
 }
 
+
+//caffe_mul is the element-wise product
 template <>
 void caffe_mul<float>(const int n, const float* a, const float* b,
     float* y) {
