@@ -74,6 +74,8 @@ namespace caffe {
         caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, M_, N_, 1, (Dtype)1.,
             reinterpret_cast<const Dtype*>(bias_multiplier_->cpu_data()),
             this->blobs_[1]->cpu_data(), (Dtype)1., top_data);
+
+        LOG(INFO) << "ip bias: " << *(reinterpret_cast<const Dtype*>(bias_multiplier_->cpu_data()));
     }
     return Dtype(0);
   }
@@ -106,37 +108,29 @@ namespace caffe {
       const vector<Blob<Dtype>*>& input){
     LOG(INFO)<<"Calculating Feedback Weights for "<<this->layer_param_.name();
 
-    if (top_filter == NULL){
-        //the first layer in the chain, initialize using the layer weights
-        int inputsize = input[0]->count() / input[0]->num();
-        this->eq_filter_ = new Blob<Dtype>(input[0]->num(), 1, N_, inputsize);
-        this->eq_filter_->CopyFrom(*(this->blobs_[0]));
-    }
-    else{
-        // Initializing the eq_filter_:
-        // The size of eq_filter is
-        //    Mini_Batch_Size * Final_Output_Channel (1) * Output_Size * Input_Size(Count)
-        //    For inner_product layer, the output is only 1 channel
-        int top_output_num = top_filter->height();
+    // Initializing the eq_filter_:
+    // The size of eq_filter is
+    //    Mini_Batch_Size * Final_Output_Channel (1) * Output_Size * Input_Size(Count)
+    //    For inner_product layer, the output is only 1 channel
+    int top_output_num = top_filter->height();
 
-        int inputsize = input[0]->count() / input[0]->num();
+    int inputsize = input[0]->count() / input[0]->num();
 
-        this->eq_filter_ = new Blob<Dtype>(input[0]->num(), 1, top_output_num, inputsize);
+    this->eq_filter_ = new Blob<Dtype>(input[0]->num(), 1, top_output_num, inputsize);
 
-        const Dtype* top_filter_data = top_filter->cpu_data();
+    const Dtype* top_filter_data = top_filter->cpu_data();
 
-        const Dtype* weight_data = this->blobs_[0]->cpu_data();
-        Dtype* eq_filter_data = this->eq_filter_->mutable_cpu_data();
+    const Dtype* weight_data = this->blobs_[0]->cpu_data();
+    Dtype* eq_filter_data = this->eq_filter_->mutable_cpu_data();
 
-        //each input image may generate different filters
-        for (int i = 0; i<this->eq_filter_->num(); i++){
-            //Calculate the eq_filter_ by using matrix multiplication:
-            //eq_filter_ = top_filter * weights (blobs_)
-            caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasTrans,
-                top_output_num, K_, N_, (Dtype)1., top_filter_data, weight_data, (Dtype)0., eq_filter_data);
-            top_filter_data += top_filter->offset(1);
-            eq_filter_data += this->eq_filter_->offset(1);
-        }
+    //each input image may generate different filters
+    for (int i = 0; i<this->eq_filter_->num(); i++){
+        //Calculate the eq_filter_ by using matrix multiplication:
+        //eq_filter_ = top_filter * weights (blobs_)
+        caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasTrans,
+            top_output_num, K_, N_, (Dtype)1., top_filter_data, weight_data, (Dtype)0., eq_filter_data);
+        top_filter_data += top_filter->offset(1);
+        eq_filter_data += this->eq_filter_->offset(1);
     }
   }
 

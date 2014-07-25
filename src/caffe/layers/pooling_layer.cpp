@@ -46,6 +46,7 @@ namespace caffe {
 
     shared_ptr<Blob<Dtype> > pooling_mask(new Blob<Dtype>(bottom[0]->num(), this->channels_,
         this->pooled_height_, this->pooled_width_));
+    memset(pooling_mask->mutable_cpu_data(), 0, sizeof(Dtype) * pooling_mask->count());
     this->pooling_mask_ = pooling_mask;
     //this->blobs_.push_back(pooling_mask);
   }
@@ -93,7 +94,6 @@ namespace caffe {
               // Change to the next channel, the offset is got by calling blob.offset(n, c, w, h) function
               bottom_data += bottom[0]->offset(0, 1);
               top_data += (*top)[0]->offset(0, 1);
-              mask_data += pooling_mask_->offset(0,1);
           }
       }
       break;
@@ -247,19 +247,15 @@ namespace caffe {
 
     for (int n = 0; n<input[0]->num(); n++){
         for (int c = 0; c< pooling_mask_->channels(); c++){
+            const Dtype* mask_data = pooling_mask_->cpu_data() + pooling_mask_->offset(n,c);
             for (int offset = 0; offset < pooling_mask_->height() * pooling_mask_->width(); ++offset) {
-                const Dtype* mask_data = pooling_mask_->cpu_data() + pooling_mask_->offset(n,c);
                 int mask_offset = static_cast<int>(*(mask_data + offset));
                 for(int top_c = 0; top_c < top_filter->channels(); top_c++){
                     for(int top_o = 0; top_o< top_output_num; top_o++) {
                         Dtype _f_value = *(top_filter_data + top_filter->offset(n, top_c, top_o) +
                             c * this->pooled_height_ * this->pooled_width_ + offset);
-                        if (_f_value != (Dtype) 0.){
-                            //for debug
-                            //LOG(INFO)<<"Position " << mask_offset <<"->"<<offset<< "on channel / image: "<<n<<" / "<<c;
-                            *(eq_filter_data_ + this->eq_filter_->offset(n, top_c, top_o) +
-                                c * this->height_ * this->width_ +mask_offset) = _f_value;
-                        }
+                        *(eq_filter_data_ + this->eq_filter_->offset(n, top_c, top_o) +
+                            c * this->height_ * this->width_ +mask_offset) += _f_value;
                     }
                 }
             }

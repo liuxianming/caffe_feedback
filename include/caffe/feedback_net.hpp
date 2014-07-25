@@ -47,6 +47,8 @@ namespace caffe{
 
     //Generate the top_filter_ for the startLayer of visualization
     void generateStartTopFilter(int startOffset);
+    //Test the eq_filter calculation
+    Dtype test_eq_filter(int _layer_idx, Blob<Dtype>* eq_filter);
 
   protected:
     //Visualize the response of single neuron, and the return value is the visualization results.
@@ -64,6 +66,7 @@ namespace caffe{
     int startLayerIdx_;
     int startChannelIdx_;
     int endLayerIdx_;
+    int startOffset_;
 
     //The synthesized top_filter for the start layer of visualization
     Blob<Dtype>* start_top_filter_;

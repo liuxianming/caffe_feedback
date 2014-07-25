@@ -41,7 +41,6 @@ namespace caffe {
   template <typename Dtype>
   void ReLULayer<Dtype>::UpdateEqFilter(const Blob<Dtype>* top_filter, const vector<Blob<Dtype>*>& input)
   {
-    LOG(INFO)<<"Calculating Feedback Weights for "<<this->layer_param_.name();
     //Initialization:
     //The size of eq_filter_ is the same as top_filter
     this->eq_filter_ = new Blob<Dtype>(top_filter->num(),

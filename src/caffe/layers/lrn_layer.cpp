@@ -158,7 +158,7 @@ namespace caffe {
     caffe_powx<Dtype>(scale_.count(), scale_data, -beta_, top_data);
 
     //store the weights
-    this->weights_.CopyFrom(*(*top)[0]);
+    this->weights_.CopyFrom(*(*top)[0], false, true);
     caffe_mul<Dtype>(scale_.count(), top_data, bottom_data, top_data);
 
     return Dtype(0.);
@@ -181,7 +181,7 @@ namespace caffe {
     for (int n = 0; n<bottom[0]->count(); ++n) {
         Dtype bottom_val = *(bottom_data + n);
         Dtype top_val = *(top_data + n);
-        *(weight_data + n) = (bottom_val == 0) ? (Dtype) 0. : (top_val / bottom_val);
+        *(weight_data + n) = ((bottom_val == 0) ? (Dtype) 0. : (top_val / bottom_val));
     }
 
     return Dtype(0.);

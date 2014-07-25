@@ -74,6 +74,7 @@ namespace caffe{
 
     this->startLayerIdx_ = startLayerIdx;
     this->startChannelIdx_ = startChannelIdx;
+    this->startOffset_ = startOffset;
     //for debug
     if(test_flag) {
         LOG(INFO)<<"Testing feedback filter calculation from ["<<this->layers_[startLayerIdx_]->layer_param().name()
@@ -89,19 +90,24 @@ namespace caffe{
         this->visualization_ = VisualizeSingleNeuron(startLayerIdx_, startChannelIdx_, startOffset);
         if(test_flag){
             //output the errors
-            Dtype error = 0;
-            for(int n = 0; n<this->visualization_->num();++n){
-                Dtype* img_data_ptr = this->blobs_[0]->mutable_cpu_data() + this->blobs_[0]->offset(n);
-                Dtype* filter_ptr = this->visualization_->mutable_cpu_data() + this->visualization_->offset(n);
-                int len = this->visualization_->width() * this->visualization_->height() * this->visualization_->channels();
-                Dtype predicted_output = caffe_cpu_dot<Dtype>(len, img_data_ptr, filter_ptr);
-                Dtype output_val = *((this->top_vecs_[this->startLayerIdx_])[0]->mutable_cpu_data()
-                    + (this->top_vecs_[this->startLayerIdx_])[0]->offset(n, this->startChannelIdx_)
-                    + startOffset);
-                LOG(INFO)<<"[Predicted value for neuron #"<<startOffset<<"] = "<<predicted_output<<" / "<<output_val;
-                error += (output_val - predicted_output) * (output_val - predicted_output);
-                LOG(INFO)<<"[ERROR for neuron #"<<startOffset<<"] = "<<error;
-            }
+//            Dtype error = 0;
+//            for(int n = 0; n<this->visualization_->num();++n){
+//                Dtype* img_data_ptr = this->blobs_[0]->mutable_cpu_data() + this->blobs_[0]->offset(n);
+//                Dtype* filter_ptr = this->visualization_->mutable_cpu_data() + this->visualization_->offset(n);
+//                int len = this->visualization_->width() * this->visualization_->height() * this->visualization_->channels();
+//                Dtype predicted_output = caffe_cpu_dot<Dtype>(len, img_data_ptr, filter_ptr);
+//                Blob<Dtype>* feedforward_output_blob = (this->top_vecs_[this->startLayerIdx_])[0];
+//                //For debug:
+//                LOG(INFO)<<"Using the blob "<<this->startLayerIdx_<<" ["<<this->blob_names_[this->top_id_vecs_[this->startLayerIdx_][0]]<<"] as groundtruth";
+//                Dtype output_val = *((this->top_vecs_[this->startLayerIdx_])[0]->mutable_cpu_data()
+//                    + (this->top_vecs_[this->startLayerIdx_])[0]->offset(n, this->startChannelIdx_)
+//                    + startOffset);
+//                LOG(INFO)<<"[Predicted value for neuron #"<<startOffset<<"] = "<<predicted_output<<" / "<<output_val;
+//                error += (output_val - predicted_output) * (output_val - predicted_output);
+//                LOG(INFO)<<"[ERROR for neuron #"<<startOffset<<"] = "<<error;
+//            }
+            Dtype error = test_eq_filter(1, this->eq_filter_top_.back());
+            LOG(INFO)<<"[ERROR for neuron #"<<startOffset<<"] = "<<error;
         }
     }
     else if(startOffset == -1){
@@ -140,7 +146,7 @@ namespace caffe{
     for(int n = 0; n<this->visualization_->num(); ++n) {
         for (int c = 0; c<this->visualization_->channels(); c++) {
             ImageNormalization<Dtype>(this->visualization_->mutable_cpu_data() + this->visualization_->offset(n, c),
-                this->visualization_->offset(0,1), (Dtype)100);
+                this->visualization_->offset(0,1), (Dtype)128);
         }
     }
   }
@@ -184,9 +190,19 @@ namespace caffe{
     this->eq_filter_top_.push_back(start_top_filter_);
     for(int i = this->startLayerIdx_; i > 0; --i){
         //Perform UpdataEqFilter()
+        //LOG(INFO)<<"Processing Layer ["<<this->layers_[i]->layer_param().name()<<"]";
+        string blob_name = this->blob_names_[(this->bottom_id_vecs_[i])[0]];
+        //LOG(INFO)<<"Using BLOB ["<<blob_name<<"] as input";
         this->layers_[i]->UpdateEqFilter(this->eq_filter_top_.back(), this->bottom_vecs_[i]);
         //Update pointer
         this->eq_filter_top_.push_back(this->layers_[i]->eq_filter());
+
+        //test
+        bool test_flag = false;
+        if (test_flag) {
+            Dtype error = test_eq_filter(i, this->eq_filter_top_.back());
+            LOG(INFO)<<"Error of Layer "<<this->layer_names_[i]<<" is "<<error<<" : "<<((error < (Dtype) 10.) ? "OK" : "FAIL");
+        }
     }
   }
 
@@ -218,6 +234,31 @@ namespace caffe{
             }
         }
     }
+  }
+
+  template<typename Dtype>
+  Dtype FeedbackNet<Dtype>::test_eq_filter(int _layer_idx, Blob<Dtype>* eq_filter) {
+    Blob<Dtype>* feedforward_output_blob = (this->top_vecs_[this->startLayerIdx_])[0];
+
+    Blob<Dtype>* input_blob = (this->bottom_vecs_[_layer_idx])[0];
+    LOG(INFO)<<"Testing using blob "<<this->blob_names_[this->bottom_id_vecs_[_layer_idx][0]] <<" as input";
+    LOG(INFO)<<"Size: "<<input_blob->channels() << " * " << input_blob->height() << " * "<<input_blob->width();
+    Dtype error = (Dtype) 0.;
+
+    for(int n = 0; n<input_blob->num(); ++n) {
+        Dtype output_val = *(feedforward_output_blob->mutable_cpu_data()
+                + feedforward_output_blob->offset(n, this->startChannelIdx_)
+                + this->startOffset_);
+        Dtype* input_data = input_blob->mutable_cpu_data() + input_blob->offset(n);
+        Dtype* eq_filter_data = eq_filter->mutable_cpu_data() + eq_filter->offset(n);
+        int len = input_blob->channels() * input_blob->height() * input_blob->width();
+        Dtype predicted_val = caffe_cpu_dot<Dtype>(len, input_data, eq_filter_data);
+
+        error += (output_val - predicted_val) * (output_val - predicted_val);
+
+        //LOG(INFO)<<"OUTTEST :"<<output_val << " / "<<predicted_val;
+    }
+    return error;
   }
 
   INSTANTIATE_CLASS(FeedbackNet);

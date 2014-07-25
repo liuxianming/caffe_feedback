@@ -125,6 +125,8 @@ namespace caffe {
 			      N_, 1, (Dtype)1., this->blobs_[1]->cpu_data(),
 			      reinterpret_cast<const Dtype*>(bias_multiplier_->cpu_data()),
 			      (Dtype)1., top_data + (*top)[0]->offset(n));
+
+	//LOG(INFO) << "convolution bias: " << *(reinterpret_cast<const Dtype*>(bias_multiplier_->cpu_data()));
       }
       bool test_flag = false;
       if(test_flag){
@@ -259,9 +261,10 @@ namespace caffe {
 	    convolution(input_data_ptr, this->blobs_[0]->mutable_cpu_data(), conv_rslt, num_output_,
 	        channels_, height_, width_,
 	        kernel_size_, pad_, stride_);
+	    //convolution results * top_filter
 	    Dtype conv_score = caffe_cpu_dot<Dtype>(top_filter->width(), conv_rslt,
 	        top_filter_data + top_filter->offset(n) + o* top_filter->width());
-	    //calculate using deconvolution
+	    //calculate using deconvolution & input data
 	    Dtype deconv_score = caffe_cpu_dot<Dtype>(input_size, input_data_ptr,
 	        eq_filter_data + this->eq_filter_->offset(n) + o * input_size);
 	    error = (conv_score - deconv_score) * (conv_score - deconv_score);
@@ -362,32 +365,29 @@ namespace caffe {
     filter_transpose(filter, output_num, channels, kernel_size, t_filter);
     //3. convolution: the input channels is the output_num in deconvolution, and vice versa.
     int deconv_pad = kernel_size - 1;
-    if (pad > 0){
-      int _height = (s_height + 2*deconv_pad - kernel_size + 1);
-      int original_height = this->height_;
-      int original_width = this->width_;
-      int _width = (s_width + 2*deconv_pad - kernel_size + 1);
-      Dtype* deconv_output = new Dtype[channels * _height * _width];
-      convolution(s_response, t_filter, deconv_output, channels, output_num, s_height, s_width, kernel_size, deconv_pad, 1);
-      //4. un-padding
-      for (int c = 0; c<channels; ++c) {
-	for (int h = 0; h<original_height; ++h){
-	  int offset = c * _height * _width
-	    + _width * (h + pad)
-	    + pad;
-	  int original_offset = c * original_height * original_width
-	    + h * original_width;
-	  memcpy(output + original_offset, deconv_output + offset, sizeof(Dtype) * original_width);
-	}
-      }
-      delete [] deconv_output;
+
+    int _height = (s_height + 2*deconv_pad - kernel_size + 1);
+    int original_height = this->height_;
+    int original_width = this->width_;
+    int _width = (s_width + 2*deconv_pad - kernel_size + 1);
+    Dtype* deconv_output = new Dtype[channels * _height * _width];
+    convolution(s_response, t_filter, deconv_output, channels, output_num, s_height, s_width, kernel_size, deconv_pad, 1);
+    //4. un-padding
+    for (int c = 0; c<channels; ++c) {
+        for (int h = 0; h<original_height; ++h){
+            int offset = c * _height * _width
+                + _width * (h + pad)
+                + pad;
+            int original_offset = c * original_height * original_width
+                + h * original_width;
+            memcpy(output + original_offset, deconv_output + offset, sizeof(Dtype) * original_width);
+        }
     }
-    else{
-      convolution(s_response, t_filter, output, channels, output_num, s_height, s_width, kernel_size, deconv_pad, 1);
-    }
+    delete [] deconv_output;
+
     //5. Cleaning:
     delete [] t_filter;
-    delete [] s_response;
+    //delete [] s_response;
   }
 
   INSTANTIATE_CLASS(ConvolutionLayer);
