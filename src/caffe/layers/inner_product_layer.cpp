@@ -74,8 +74,6 @@ namespace caffe {
         caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, M_, N_, 1, (Dtype)1.,
             reinterpret_cast<const Dtype*>(bias_multiplier_->cpu_data()),
             this->blobs_[1]->cpu_data(), (Dtype)1., top_data);
-
-        LOG(INFO) << "ip bias: " << *(reinterpret_cast<const Dtype*>(bias_multiplier_->cpu_data()));
     }
     return Dtype(0);
   }

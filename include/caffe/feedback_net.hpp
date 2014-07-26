@@ -30,10 +30,12 @@ namespace caffe{
     // startChannelIdx = 0
     // startOffset: visualize the neuron at specific position (pos = startOffset)
     //  if startOffset == -1 (by default), use all the output neurons with the output value as weights.
-    void Visualize(int startLayerIdx, int startChannelIdx = 0, int startOffset = -1, bool test_flag = false);
+    void Visualize(int startLayerIdx, int startChannelIdx = 0, int heightOffset = -1, int widthOffset = -1,  bool test_flag = false);
     // Search the layer list and get the index
-    void Visualize(string startLayer, int startChannelIdx = 0, int startOffset = -1, bool test_flag = false);
+    void Visualize(string startLayer, int startChannelIdx = 0, int heightOffset  = -1, int widthOffset = -1,  bool test_flag = false);
 
+    void VisualizeTopKNeurons(int startLayerIdx, int k = 1, bool weight_flag = true);
+    void VisualizeTopKNeurons(string startLayer, int k = 1, bool weight_flag = true);
     inline Blob<Dtype>* GetVisualization() {return visualization_;}
 
     //draw visualization: draw visualization_ to files, stored in dir
@@ -52,7 +54,9 @@ namespace caffe{
 
   protected:
     //Visualize the response of single neuron, and the return value is the visualization results.
-    Blob<Dtype>* VisualizeSingleNeuron(int startLayerIdx, int startChannelIdx, int startOffset);
+    Blob<Dtype>* VisualizeSingleNeuron(int startLayerIdx, int startChannelIdx, int startOffset, bool weigh_flag);
+    Blob<Dtype>* VisualizeSingleRowNeurons(int startLayerIdx, int startChannelIdx, int heightOffset);
+    Blob<Dtype>* VisualizeSingleColNeurons(int startLayerIdx, int startChannelIdx, int widthOffset);
     //Stores the visualization results
     //num: input images of minibatch;
     //channels, width, height: size of image (channel by default is rgb)

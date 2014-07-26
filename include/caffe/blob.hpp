@@ -83,6 +83,10 @@ class Blob {
   void ShareData(const Blob& other);
   void ShareDiff(const Blob& other);
 
+  void multiply(const Dtype s);
+  void multiply(const Dtype* s);
+  void add(const Blob<Dtype>& b);
+
  protected:
   /*
    * num_: number of images in one mini-batch

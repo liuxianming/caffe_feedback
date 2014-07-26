@@ -225,7 +225,7 @@ namespace caffe {
   template <typename Dtype>
   void PoolingLayer<Dtype>::UpdateEqFilter(const Blob<Dtype>* top_filter,
       const vector<Blob<Dtype>*>& input) {
-    //LOG(INFO)<<"Calculating Feedback Weights for "<<this->layer_param_.name();
+    LOG(INFO)<<"Calculating Feedback Weights for "<<this->layer_param_.name();
 
     // Initializing the eq_filter_:
     // The size of eq_filter is

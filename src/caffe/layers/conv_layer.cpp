@@ -232,6 +232,7 @@ namespace caffe {
   template <typename Dtype>
   void ConvolutionLayer<Dtype>::UpdateEqFilter(const Blob<Dtype>* top_filter,
       const vector<Blob<Dtype>*>& input) {
+    LOG(INFO)<<"Calculating Feedback Weights for "<<this->layer_param_.name();
     int input_size = channels_ * width_ * height_;
     int output_size = top_filter->height();
     //the final output only has one channel    
@@ -324,10 +325,17 @@ namespace caffe {
     im2col_cpu(input, channels, height,
 	       width, kernel_size, pad, stride, col_data);
     //Performing inner product
+    ///*
     caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, M_, N_, K_,
 			  (Dtype)1., filter, col_data,
 			  (Dtype)0., output);
+    //*/
+    /*
+    caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, M_, N_, K_,
+			  (Dtype)1., filter, col_data,
+			  (Dtype)0., output);
 
+    */
     delete [] col_data;
   }
 
