@@ -72,7 +72,7 @@ class ConvolutionLayer : public Layer<Dtype> {
 		  int kernel_size,
 		  Dtype* t_filter);
 
-  void convolution(Dtype* input,
+  void convolution_cpu(Dtype* input,
 		  Dtype* filter,
 		  Dtype* output,
 		  int output_num,
@@ -81,6 +81,16 @@ class ConvolutionLayer : public Layer<Dtype> {
 		  int width,
 		  int kernel_size,
 		  int pad, int stride);
+
+  void convolution_gpu(Dtype* input,
+      Dtype* filter,
+      Dtype* output,
+      int output_num,
+      int channels,
+      int height,
+      int width,
+      int kernel_size,
+      int pad, int stride);
 
   //Function to perform deconvolution:
   //response: the response after convolution, a 3-dimensional matrix (in shape of Blob)
@@ -96,6 +106,17 @@ class ConvolutionLayer : public Layer<Dtype> {
 		  int kernel_size,
 		  int pad,
 		  int stride);
+
+  void deconvolution_gpu(const Dtype* response,
+                    Dtype* filter,
+                    Dtype* output,
+                    int output_num,
+                    int output_height,
+                    int output_width,
+                    int channels,
+                    int kernel_size,
+                    int pad,
+                    int stride);
 
   virtual Dtype Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
