@@ -133,63 +133,6 @@ namespace caffe {
     //delete [] col_data;
   }
 
-  template <typename Dtype>
-  void ConvolutionLayer<Dtype>::deconvolution_gpu(const Dtype* response, Dtype* filter, Dtype* output,
-      int output_num, int output_height, int output_width,
-      int channels, int kernel_size, int pad, int stride) {
-    //1. striding and padding
-    int s_width = output_width * stride;
-    int s_height = output_height * stride;
-    shared_ptr<SyncedMemory> s_response_;
-    s_response_.reset(new SyncedMemory(s_width * s_height * output_num * sizeof(Dtype)));
-    Dtype* s_response = reinterpret_cast<Dtype*>(s_response_->mutable_cpu_data());
-    //1.1. initialize all 0
-    memset(s_response_->mutable_cpu_data(), 0, sizeof(Dtype) * s_width * s_height * output_num);
-    //1.2. expanding
-    for (int c = 0; c<output_num; ++c){
-        for(int h = 0; h<output_height; ++h) {
-            for(int w = 0; w<output_width; ++w){
-                int s_offset = c * s_width * s_height                           //layer
-                    + h * stride * s_width                                      //stride rows
-                    + w * stride;                                               //stride offset
-                *(s_response + s_offset) = *response;
-                response += 1;
-            }// each column
-        }// each row
-    }// for each output channel
-    //2. filter_transponse
-    shared_ptr<SyncedMemory> t_filter_;
-    t_filter_.reset(new SyncedMemory(kernel_size * kernel_size * channels * output_num * sizeof(Dtype)));
-    filter_transpose(filter, output_num, channels, kernel_size, reinterpret_cast<Dtype*>(t_filter_->mutable_cpu_data()));
-    //3. convolution: the input channels is the output_num in deconvolution, and vice versa.
-    int deconv_pad = kernel_size - 1;
-
-    int _height = (s_height + 2*deconv_pad - kernel_size + 1);
-    int original_height = this->height_;
-    int original_width = this->width_;
-    int _width = (s_width + 2*deconv_pad - kernel_size + 1);
-    shared_ptr<SyncedMemory> deconv_output_;
-    deconv_output_.reset(new SyncedMemory(channels * _height * _width * sizeof(Dtype)));
-
-    convolution_gpu(reinterpret_cast<Dtype*>(s_response_->mutable_gpu_data()), reinterpret_cast<Dtype*>(t_filter_->mutable_gpu_data()),
-        reinterpret_cast<Dtype*>(deconv_output_->mutable_gpu_data()), channels, output_num, s_height, s_width, kernel_size, deconv_pad, 1);
-
-    Dtype* deconv_output = reinterpret_cast<Dtype*>(deconv_output_->mutable_cpu_data());
-    //4. un-padding
-    for (int c = 0; c<channels; ++c) {
-        for (int h = 0; h<original_height; ++h){
-            int offset = c * _height * _width
-                + _width * (h + pad)
-                + pad;
-            int original_offset = c * original_height * original_width
-                + h * original_width;
-            memcpy(output + original_offset, deconv_output + offset, sizeof(Dtype) * original_width);
-        }
-    }
-    // For shared_ptr, there is no need to clean the memory
-  }
-
-
   INSTANTIATE_CLASS(ConvolutionLayer);
 
 }  // namespace caffe

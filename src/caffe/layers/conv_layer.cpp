@@ -8,7 +8,7 @@
 #include "caffe/filler.hpp"
 #include "caffe/util/math_functions.hpp"
 
-#define GPUMODE 0
+#define GPUMODE 1
 
 namespace caffe {
 

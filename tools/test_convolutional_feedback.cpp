@@ -43,7 +43,7 @@ int main(int argc, char** argv){
 
   //start feedback
   //caffe_test_net.Visualize("fc8", 998, 0, 0, test_flag);
-  caffe_test_net.VisualizeTopKNeurons("conv5", 10, true);
+  caffe_test_net.VisualizeTopKNeurons("fc8", 1, true);
 
   if(test_flag == false){
       Blob<float>* visualization = caffe_test_net.GetVisualization();
