@@ -29,49 +29,43 @@ int main(int argc, char** argv){
   FeedbackNet<float> caffe_test_net(argv[1]);
   caffe_test_net.CopyTrainedLayersFrom(argv[2]);
 
-  //Forward process using FeedbackNet
-  const vector<Blob<float>*>& result = caffe_test_net.ForwardPrefilled();
-  Blob<float>* input_img = (caffe_test_net.blobs()[0]).get();
+  for(int iter = 0; iter < atoi(argv[3]); ++iter){
+      //Forward process using FeedbackNet
+      LOG(INFO)<<"Processing image feedforward...";
+      const vector<Blob<float>*>& result = caffe_test_net.ForwardPrefilled();
+      LOG(INFO)<<"Feedforward complete!";
+      Blob<float>* input_img = (caffe_test_net.blobs()[0]).get();
 
-  //Read image mean from protobuffer file (indicated by argv[3])
-  BlobProto blob_proto;
-  ReadProtoFromBinaryFileOrDie(argv[3], &blob_proto);
-  Blob<float> data_mean;
-  data_mean.FromProto(blob_proto);
+      bool test_flag = false;
+      //start feedback
+      //caffe_test_net.Visualize("conv3", 5, 3, 3, test_flag);
+      LOG(INFO)<<"Start visualization";
+      caffe_test_net.VisualizeTopKNeurons("fc8", 1, true);
 
-  bool test_flag = false;
+      if(test_flag == false){
+          Blob<float>* visualization = caffe_test_net.GetVisualization();
 
-  //start feedback
-  //caffe_test_net.Visualize("fc8", 998, 0, 0, test_flag);
-  caffe_test_net.VisualizeTopKNeurons("fc8", 1, true);
+          float* imagedata = new float[visualization->count()];
 
-  if(test_flag == false){
-      Blob<float>* visualization = caffe_test_net.GetVisualization();
-
-      float* imagedata = new float[data_mean.count()];
-
-      for(int n = 0; n<visualization->num(); n++) {
-          //visualize the i-th image
-          float* blobdata = visualization->mutable_cpu_data() + visualization->offset(n);
-          for (int i=0; i<data_mean.count(); i++){
-              //          *(imagedata+i) = *(blobdata + i) + *(data_mean.mutable_cpu_data() + i);
-              *(imagedata+i) = *(blobdata + i) ;
+          for(int n = 0; n<visualization->num(); n++) {
+              //visualize the i-th image
+              float* blobdata = visualization->mutable_cpu_data() + visualization->offset(n);
+              for (int i=0; i<visualization->count(); i++){
+                  *(imagedata+i) = *(blobdata + i) ;
+              }
+              std::ostringstream convert;
+              convert << iter <<"_"<<n <<".jpg";
+              string filename = convert.str();
+              caffe::WriteDataToImage<float>(filename,
+                  visualization->channels(),
+                  visualization->height(),
+                  visualization->width(),
+                  imagedata
+              );
           }
-          std::ostringstream convert;
-          convert << n <<".jpg";
-          string filename = convert.str();
-          LOG(INFO)<<"Writing data to image "<<filename<<" ...";
-          LOG(INFO)<<visualization->channels();
-          LOG(INFO)<<visualization->height();
-          caffe::WriteDataToImage<float>(filename,
-              visualization->channels(),
-              visualization->height(),
-              visualization->width(),
-              imagedata
-          );
+          //clear
+          delete [] imagedata;
       }
-      //clear
-      delete [] imagedata;
   }
   LOG(INFO)<<"Done";
 }

@@ -183,6 +183,7 @@ namespace caffe{
       int channel_offset = offset / output_blob_channel_size;
       this->startChannelIdx_ = channel_offset;
       int in_channel_offset = offset % output_blob_channel_size;
+      this->startOffset_ = in_channel_offset;
       _visualization ->add(*(VisualizeSingleNeuron(startLayerIdx, channel_offset, in_channel_offset, weight_flag)));
     }
 
@@ -278,7 +279,7 @@ namespace caffe{
       this->eq_filter_top_.push_back(this->layers_[i]->eq_filter());
 
       //test
-      bool test_flag = false;
+      bool test_flag = true;
       if (test_flag) {
 	Dtype error = test_eq_filter(i, this->eq_filter_top_.back());
 	LOG(INFO)<<"Error of Layer "<<this->layer_names_[i]<<" is "<<error<<" : "<<((error < (Dtype) 10.) ? "OK" : "FAIL");
@@ -335,7 +336,6 @@ namespace caffe{
       Dtype predicted_val = caffe_cpu_dot<Dtype>(len, input_data, eq_filter_data);
 
       error += (output_val - predicted_val) * (output_val - predicted_val);
-
       //LOG(INFO)<<"OUTTEST :"<<output_val << " / "<<predicted_val;
     }
     return error;

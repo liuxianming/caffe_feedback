@@ -229,6 +229,7 @@ void ImageNormalization<float>(float* imgData, int len, float mean){
       if(val < min) min = val;
       if(val > max) max = val;
   }
+  LOG(INFO)<<"Max / Min: " << max <<" / "<<min;
   //Normalization
   for(int i = 0; i<len; i++) {
       if (min == max) {
@@ -236,7 +237,7 @@ void ImageNormalization<float>(float* imgData, int len, float mean){
           imgData[i] = mean;
       }
       else{
-          //imgData[i] = (imgData[i] - min) / (max-min) * (255.0 - mean) + mean;
+          //imgData[i] = std::max(imgData[i] / max * (255 - mean) + mean, mean);
           imgData[i] = imgData[i] / max * (255 - mean) + mean;
       }
   }
@@ -252,13 +253,14 @@ void ImageNormalization<double>(double* imgData, int len, double mean){
       if(val > max) max = val;
   }
   //Normalization
+  LOG(INFO)<<"Max / Min: " << max <<" / "<<min;
   for(int i = 0; i<len; i++) {
       if (min == max) {
           //the situation of all 0's
           imgData[i] = mean;
       }
       else{
-          //imgData[i] = (imgData[i] - min) / (max-min) * (255.0 - mean) + mean;
+          //imgData[i] = std::max(imgData[i] / max * (255 - mean) + mean, mean);
           imgData[i] = imgData[i] / max * (255 - mean) + mean;
       }
   }

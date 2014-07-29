@@ -107,17 +107,6 @@ class ConvolutionLayer : public Layer<Dtype> {
 		  int pad,
 		  int stride);
 
-  void deconvolution_gpu(const Dtype* response,
-                    Dtype* filter,
-                    Dtype* output,
-                    int output_num,
-                    int output_height,
-                    int output_width,
-                    int channels,
-                    int kernel_size,
-                    int pad,
-                    int stride);
-
   virtual Dtype Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
   virtual Dtype Forward_gpu(const vector<Blob<Dtype>*>& bottom,

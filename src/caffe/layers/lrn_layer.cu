@@ -6,6 +6,8 @@
 #include "caffe/vision_layers.hpp"
 #include "caffe/util/math_functions.hpp"
 
+#define ESP (Dtype) 0.01
+
 namespace caffe {
 
 template <typename Dtype>
@@ -95,9 +97,23 @@ Dtype LRNLayer<Dtype>::CrossChannelForward_gpu(
   CUDA_POST_KERNEL_CHECK;
   n_threads = bottom[0]->count();
   // NOLINT_NEXT_LINE(whitespace/operators)
+  //COPY DATA:
+  this->weights_.CopyFrom(*(*top)[0], false, true);
   LRNComputeOutput<<<CAFFE_GET_BLOCKS(n_threads), CAFFE_CUDA_NUM_THREADS>>>(
       n_threads, bottom_data, scale_data, -beta_, top_data);
   CUDA_POST_KERNEL_CHECK;
+
+
+  //store the weights
+  const Dtype* c_bottom_data = bottom[0]->cpu_data();
+  Dtype* c_top_data = (*top)[0]->mutable_cpu_data();
+  weights_.CopyFrom(*((*top)[0]), false, true);
+  Dtype* weight_data = weights_.mutable_cpu_data();
+  for (int n = 0; n<bottom[0]->count(); ++n) {
+      Dtype bottom_val = *(c_bottom_data + n);
+      Dtype top_val = *(c_top_data + n);
+      *(weight_data + n) = ((bottom_val > ESP || bottom_val < -ESP ) ? (Dtype) 0. : (top_val / bottom_val));
+  }
   return Dtype(0.);
 }
 

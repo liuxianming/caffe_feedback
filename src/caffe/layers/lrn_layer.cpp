@@ -6,6 +6,8 @@
 #include "caffe/vision_layers.hpp"
 #include "caffe/util/math_functions.hpp"
 
+#define ESP (Dtype) 0.01
+
 namespace caffe {
 
   template <typename Dtype>
@@ -103,8 +105,10 @@ namespace caffe {
 				     vector<Blob<Dtype>*>* top) {
     switch (this->layer_param_.lrn_param().norm_region()) {
     case LRNParameter_NormRegion_ACROSS_CHANNELS:
+      LOG(INFO)<<"Across channels";
       return CrossChannelForward_cpu(bottom, top);
     case LRNParameter_NormRegion_WITHIN_CHANNEL:
+      LOG(INFO)<<"Within channels";
       return WithinChannelForward(bottom, top);
     default:
       LOG(FATAL) << "Unknown normalization region.";
@@ -156,17 +160,15 @@ namespace caffe {
 
     // In the end, compute output
     caffe_powx<Dtype>(scale_.count(), scale_data, -beta_, top_data);
-
     //store the weights
-    this->weights_.CopyFrom(*(*top)[0], false, true);
+    weights_.CopyFrom(*((*top)[0]), false, true);
     caffe_mul<Dtype>(scale_.count(), top_data, bottom_data, top_data);
-
     return Dtype(0.);
   }
 
   template <typename Dtype>
-  Dtype LRNLayer<Dtype>::WithinChannelForward(
-					      const vector<Blob<Dtype>*>& bottom, vector<Blob<Dtype>*>* top) {
+  Dtype LRNLayer<Dtype>::WithinChannelForward(const vector<Blob<Dtype>*>& bottom, 
+					      vector<Blob<Dtype>*>* top) {
     split_layer_->Forward(bottom, &split_top_vec_);
     square_layer_->Forward(square_bottom_vec_, &square_top_vec_);
     pool_layer_->Forward(square_top_vec_, &pool_top_vec_);
@@ -181,7 +183,7 @@ namespace caffe {
     for (int n = 0; n<bottom[0]->count(); ++n) {
         Dtype bottom_val = *(bottom_data + n);
         Dtype top_val = *(top_data + n);
-        *(weight_data + n) = ((bottom_val == 0) ? (Dtype) 0. : (top_val / bottom_val));
+        *(weight_data + n) = ((bottom_val >ESP || bottom_val <-ESP) ? (Dtype) 0. : (top_val / bottom_val));
     }
 
     return Dtype(0.);
@@ -277,14 +279,12 @@ namespace caffe {
     //For simplicity, the first version just copy the top_filter to eq_filter_
     this->eq_filter_ = new Blob<Dtype>(top_filter->num(), top_filter->channels(), 
 				       top_filter->height(), top_filter->width());
-    this->eq_filter_->CopyFrom( *top_filter);
 
     Dtype* eq_filter_data = this->eq_filter_->mutable_cpu_data();
-    Dtype* weight_data = this->weights_.mutable_cpu_data();
+    const Dtype* weight_data = this->weights_.cpu_data();
+    const Dtype* top_filter_data = top_filter->cpu_data(); 
 
-    for(int n = 0; n<this->eq_filter_->count(); ++n) {
-        *(eq_filter_data + n) = *(eq_filter_data + n) * *(weight_data + n);
-    }
+    caffe_mul<Dtype>(this->eq_filter_->count(), top_filter_data, weight_data, eq_filter_data);
   }
 
   INSTANTIATE_CLASS(LRNLayer);

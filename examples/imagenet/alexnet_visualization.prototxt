@@ -26,23 +26,6 @@ layers {
   top: "conv1"
 }
 layers {
-  name: "relu1"
-  type: RELU
-  bottom: "conv1"
-  top: "conv1"
-}
-layers {
-  name: "norm1"
-  type: LRN
-  lrn_param {
-    local_size: 5
-    alpha: 0.0001
-    beta: 0.75
-  }
-  bottom: "conv1"
-  top: "norm1"
-}
-layers {
   name: "pool1"
   type: POOLING
   pooling_param {
@@ -50,7 +33,7 @@ layers {
     kernel_size: 3
     stride: 2
   }
-  bottom: "norm1"
+  bottom: "conv1"
   top: "pool1"
 }
 layers {
@@ -65,23 +48,7 @@ layers {
   bottom: "pool1"
   top: "conv2"
 }
-layers {
-  name: "relu2"
-  type: RELU
-  bottom: "conv2"
-  top: "conv2"
-}
-layers {
-  name: "norm2"
-  type: LRN
-  lrn_param {
-    local_size: 5
-    alpha: 0.0001
-    beta: 0.75
-  }
-  bottom: "conv2"
-  top: "norm2"
-}
+
 layers {
   name: "pool2"
   type: POOLING
@@ -90,7 +57,7 @@ layers {
     kernel_size: 3
     stride: 2
   }
-  bottom: "norm2"
+  bottom: "conv2"
   top: "pool2"
 }
 layers {
@@ -104,12 +71,7 @@ layers {
   bottom: "pool2"
   top: "conv3"
 }
-layers {
-  name: "relu3"
-  type: RELU
-  bottom: "conv3"
-  top: "conv3"
-}
+
 layers {
   name: "conv4"
   type: CONVOLUTION
@@ -122,12 +84,7 @@ layers {
   bottom: "conv3"
   top: "conv4"
 }
-layers {
-  name: "relu4"
-  type: RELU
-  bottom: "conv4"
-  top: "conv4"
-}
+
 layers {
   name: "conv5"
   type: CONVOLUTION
@@ -140,12 +97,7 @@ layers {
   bottom: "conv4"
   top: "conv5"
 }
-layers {
-  name: "relu5"
-  type: RELU
-  bottom: "conv5"
-  top: "conv5"
-}
+
 layers {
   name: "pool5"
   type: POOLING
@@ -166,12 +118,7 @@ layers {
   bottom: "pool5"
   top: "fc6"
 }
-layers {
-  name: "relu6"
-  type: RELU
-  bottom: "fc6"
-  top: "fc6"
-}
+
 layers {
   name: "drop6"
   type: DROPOUT
@@ -179,7 +126,7 @@ layers {
     dropout_ratio: 0.5
   }
   bottom: "fc6"
-  top: "fc6"
+  top: "drop6"
 }
 layers {
   name: "fc7"
@@ -187,15 +134,10 @@ layers {
   inner_product_param {
     num_output: 4096
   }
-  bottom: "fc6"
+  bottom: "drop6"
   top: "fc7"
 }
-layers {
-  name: "relu7"
-  type: RELU
-  bottom: "fc7"
-  top: "fc7"
-}
+
 layers {
   name: "drop7"
   type: DROPOUT
@@ -203,7 +145,7 @@ layers {
     dropout_ratio: 0.5
   }
   bottom: "fc7"
-  top: "fc7"
+  top: "drop7"
 }
 layers {
   name: "fc8"
@@ -211,7 +153,7 @@ layers {
   inner_product_param {
     num_output: 1000
   }
-  bottom: "fc7"
+  bottom: "drop7"
   top: "fc8"
 }
 layers {
