@@ -39,7 +39,8 @@ namespace caffe {
   }
 
   template <typename Dtype>
-  void ReLULayer<Dtype>::UpdateEqFilter(const Blob<Dtype>* top_filter, const vector<Blob<Dtype>*>& input)
+  void ReLULayer<Dtype>::UpdateEqFilter(const Blob<Dtype>* top_filter, 
+					const vector<Blob<Dtype>*>& input)
   {
     //Initialization:
     //The size of eq_filter_ is the same as top_filter
@@ -59,11 +60,10 @@ namespace caffe {
         for (int offset = 0; offset<inputsize; offset++) {
             Dtype _value = *(input_data + input[0]->offset(m) + offset);
             if (_value <= 0){
-                //for debug
-                //LOG(INFO)<<"Neuron in image # "<<m<<" disabled";
                 for(int c = 0; c<this->eq_filter_->channels(); c++){
                     for(int o = 0; o<this->eq_filter_->height(); o++){
-                        *(eq_filter_data + offset + this->eq_filter_->offset(m, c, o)) = (Dtype) 0.;
+                        *(eq_filter_data + offset + this->eq_filter_->offset(m, c, o)) 
+			  = (Dtype) 0.;
                     } // each output
                 } //each channel
             }

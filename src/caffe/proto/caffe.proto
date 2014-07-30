@@ -114,7 +114,7 @@ message LayerParameter {
   // line above the enum. Update the next available ID when you add a new
   // LayerType.
   //
-  // LayerType next available ID: 30 (last added: MEMORY_DATA)
+  // LayerType next available ID: 31 (last added: RELUPLUS)
   enum LayerType {
     // "NONE" layer type is 0th enum element so that we don't cause confusion
     // by defaulting to an existent LayerType (instead, should usually error if
@@ -142,6 +142,7 @@ message LayerParameter {
     POOLING = 17;
     POWER = 26;
     RELU = 18;
+    RELUPLUS = 30;	
     SIGMOID = 19;
     SIGMOID_CROSS_ENTROPY_LOSS = 27;
     SOFTMAX = 20;

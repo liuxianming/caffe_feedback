@@ -14,6 +14,8 @@
 #include <leveldb/db.h>
 #include <leveldb/write_batch.h>
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <algorithm>
 #include <fstream>  // NOLINT(readability/streams)
 #include <string>
@@ -29,12 +31,13 @@ using std::string;
 
 int main(int argc, char** argv) {
   ::google::InitGoogleLogging(argv[0]);
-  if (argc < 4 || argc > 5) {
+  if (argc < 4 || argc > 6) {
     printf("Convert a set of images to the leveldb format used\n"
         "as input for Caffe.\n"
         "Usage:\n"
         "    convert_imageset ROOTFOLDER/ LISTFILE DB_NAME"
         " RANDOM_SHUFFLE_DATA[0 or 1]\n"
+	" RESIZE_IMAGE[SIZE]\n"
         "The ImageNet dataset for the training demo is at\n"
         "    http://www.image-net.org/download-images\n");
     return 1;
@@ -72,6 +75,17 @@ int main(int argc, char** argv) {
   int data_size;
   bool data_size_initialized = false;
   for (int line_id = 0; line_id < lines.size(); ++line_id) {
+    //resize the image if needed
+    if(argc == 6){
+      int r_img_size = atoi(argv[5]);
+      if(r_img_size > 0){
+	char* command = new char[256];
+	sprintf(command, "convert -resize %dx%d\\! %s%s %s%s", r_img_size, r_img_size, 
+		root_folder.c_str(), lines[line_id].first.c_str(), 
+		root_folder.c_str(), lines[line_id].first.c_str());
+	system(command);
+      }
+    }
     if (!ReadImageToDatum(root_folder + lines[line_id].first,
                           lines[line_id].second, &datum)) {
       continue;

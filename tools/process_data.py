@@ -1,4 +1,11 @@
-#! ~/anaconda/bin/python
+#! ~/usr/local/bin/python
+'''
+Process CUB/Birds data (fine-grained classification):
+1. Move all the images to train / test / val folder
+2. Create the files of train.txt, test.txt, and val.txt
+3. Assign the labels to each image
+4. If needed, resize and crop the image to the required size
+'''
 
 import sys
 import cv2
