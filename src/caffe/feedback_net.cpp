@@ -270,16 +270,14 @@ namespace caffe{
     this->eq_filter_top_.clear();
     this->eq_filter_top_.push_back(start_top_filter_);
     for(int i = this->startLayerIdx_; i > 0; --i){
-      //Perform UpdataEqFilter()
       //LOG(INFO)<<"Processing Layer ["<<this->layers_[i]->layer_param().name()<<"]";
       string blob_name = this->blob_names_[(this->bottom_id_vecs_[i])[0]];
       //LOG(INFO)<<"Using BLOB ["<<blob_name<<"] as input";
       this->layers_[i]->UpdateEqFilter(this->eq_filter_top_.back(), this->bottom_vecs_[i]);
-      //Update pointer
       this->eq_filter_top_.push_back(this->layers_[i]->eq_filter());
 
       //test
-      bool test_flag = true;
+      bool test_flag = false;
       if (test_flag) {
 	Dtype error = test_eq_filter(i, this->eq_filter_top_.back());
 	LOG(INFO)<<"Error of Layer "<<this->layer_names_[i]<<" is "<<error<<" : "<<((error < (Dtype) 10.) ? "OK" : "FAIL");
@@ -288,10 +286,10 @@ namespace caffe{
   }
 
   template<typename Dtype>
-  void FeedbackNet<Dtype>::DrawVisualization(string dir) {
+  void FeedbackNet<Dtype>::DrawVisualization(string dir, string prefix) {
     std::ostringstream convert;
     for (int n = 0; n<visualization_->num(); n++) {
-      convert<<dir<<n;
+      convert<<dir<<prefix<<n;
       string filename = convert.str();
       if (visualization_->channels() == 3 || visualization_->channels() == 1){
 	//Visualize as RGB / Grey image
@@ -299,7 +297,7 @@ namespace caffe{
 	const int _height = visualization_->height();
 	const int _width = visualization_->width();
 	const int _channel = visualization_->channels();
-	WriteDataToImage(filename, _channel, _height, _width,
+	WriteDataToImage<Dtype>(filename, _channel, _height, _width,
 			 visualization_->mutable_cpu_data() + visualization_->offset(n) );
       }
       else{
@@ -310,7 +308,7 @@ namespace caffe{
 	  const int _height = visualization_->height();
 	  const int _width = visualization_->width();
 	  const int _channel = visualization_->channels();
-	  WriteDataToImage(filename, _channel, _height, _width,
+	  WriteDataToImage<Dtype>(filename, _channel, _height, _width,
 			   visualization_->mutable_cpu_data() + visualization_->offset(n, c) );
 	}
       }

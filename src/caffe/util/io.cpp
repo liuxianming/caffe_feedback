@@ -229,7 +229,7 @@ void ImageNormalization<float>(float* imgData, int len, float mean){
       if(val < min) min = val;
       if(val > max) max = val;
   }
-  LOG(INFO)<<"Max / Min: " << max <<" / "<<min;
+  //LOG(INFO)<<"Max / Min: " << max <<" / "<<min;
   //Normalization
   for(int i = 0; i<len; i++) {
       if (min == max) {
@@ -253,7 +253,7 @@ void ImageNormalization<double>(double* imgData, int len, double mean){
       if(val > max) max = val;
   }
   //Normalization
-  LOG(INFO)<<"Max / Min: " << max <<" / "<<min;
+  //LOG(INFO)<<"Max / Min: " << max <<" / "<<min;
   for(int i = 0; i<len; i++) {
       if (min == max) {
           //the situation of all 0's

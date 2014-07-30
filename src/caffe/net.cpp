@@ -250,7 +250,6 @@ const vector<Blob<Dtype>*>& Net<Dtype>::ForwardPrefilled(Dtype* loss) {
     *loss = Dtype(0.);
   }
   for (int i = 0; i < layers_.size(); ++i) {
-    LOG(ERROR) << "Forwarding " << layer_names_[i];
     Dtype layer_loss = layers_[i]->Forward(bottom_vecs_[i], &top_vecs_[i]);
     if (loss != NULL) {
       *loss += layer_loss;

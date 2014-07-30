@@ -39,7 +39,7 @@ namespace caffe{
     inline Blob<Dtype>* GetVisualization() {return visualization_;}
 
     //draw visualization: draw visualization_ to files, stored in dir
-    void DrawVisualization(string dir);
+    void DrawVisualization(string dir, string prefix = "");
 
     //Member function
     void InitVisualization();

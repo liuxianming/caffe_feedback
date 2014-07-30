@@ -276,7 +276,6 @@ namespace caffe {
   template<typename Dtype>
   void LRNLayer<Dtype>::UpdateEqFilter(const Blob<Dtype>* top_filter, 
 				       const vector<Blob<Dtype>*>& input){
-    //For simplicity, the first version just copy the top_filter to eq_filter_
     this->eq_filter_ = new Blob<Dtype>(top_filter->num(), top_filter->channels(), 
 				       top_filter->height(), top_filter->width());
 

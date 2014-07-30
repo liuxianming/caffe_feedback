@@ -47,10 +47,6 @@ namespace caffe {
         }
     }  // parameter initialization
 
-    //for debug
-    LOG(INFO)<<"Parameters: " << this->blobs_.size() << " * "<<this->blobs_[0]->num() << " * " << this->blobs_[0]->channels()
-		      << " * " <<this->blobs_[0]->height() <<" * " <<this->blobs_[0]->width();
-
     // Setting up the bias multiplier
     if (bias_term_) {
         bias_multiplier_.reset(new SyncedMemory(M_ * sizeof(Dtype)));
@@ -104,12 +100,7 @@ namespace caffe {
   template <typename Dtype>
   void InnerProductLayer<Dtype>::UpdateEqFilter(const Blob<Dtype>* top_filter,
       const vector<Blob<Dtype>*>& input){
-    LOG(INFO)<<"Calculating Feedback Weights for "<<this->layer_param_.name();
-
-    // Initializing the eq_filter_:
-    // The size of eq_filter is
-    //    Mini_Batch_Size * Final_Output_Channel (1) * Output_Size * Input_Size(Count)
-    //    For inner_product layer, the output is only 1 channel
+    //LOG(INFO)<<"Calculating Feedback Weights for "<<this->layer_param_.name();
     int top_output_num = top_filter->height();
 
     int inputsize = input[0]->count() / input[0]->num();

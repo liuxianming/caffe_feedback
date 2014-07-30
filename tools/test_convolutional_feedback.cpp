@@ -45,6 +45,11 @@ int main(int argc, char** argv){
       if(test_flag == false){
           Blob<float>* visualization = caffe_test_net.GetVisualization();
 
+	  std::ostringstream convert;
+	  convert << iter <<"_";
+	  string prefix = convert.str();
+	  caffe_test_net.DrawVisualization("./", prefix);
+	  /*
           float* imagedata = new float[visualization->count()];
 
           for(int n = 0; n<visualization->num(); n++) {
@@ -65,6 +70,7 @@ int main(int argc, char** argv){
           }
           //clear
           delete [] imagedata;
+	  */
       }
   }
   LOG(INFO)<<"Done";

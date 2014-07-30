@@ -30,7 +30,6 @@ namespace caffe {
     height_ = bottom[0]->height();
     width_ = bottom[0]->width();
     //For debug
-    LOG(INFO)<<"bottom -> num() = " <<bottom[0]->num();
     pooled_height_ = static_cast<int>(ceil(static_cast<float>(
 							      height_ + 2 * pad_ - kernel_size_) / stride_)) + 1;
     pooled_width_ = static_cast<int>(ceil(static_cast<float>(
@@ -56,7 +55,6 @@ namespace caffe {
   template <typename Dtype>
   Dtype PoolingLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 					 vector<Blob<Dtype>*>* top) {
-    LOG(INFO)<<"Pooling using CPU";
     const Dtype* bottom_data = bottom[0]->cpu_data();
     Dtype* top_data = (*top)[0]->mutable_cpu_data();
     // Different pooling methods. We explicitly do the switch outside the for
@@ -224,7 +222,7 @@ namespace caffe {
   template <typename Dtype>
   void PoolingLayer<Dtype>::UpdateEqFilter(const Blob<Dtype>* top_filter,
 					   const vector<Blob<Dtype>*>& input) {
-    LOG(INFO)<<"Calculating Feedback Weights for "<<this->layer_param_.name();
+    //LOG(INFO)<<"Calculating Feedback Weights for "<<this->layer_param_.name();
 
     if(this->layer_param_.pooling_param().pool() == PoolingParameter_PoolMethod_MAX){
       //dealing with MAX_POOLING
