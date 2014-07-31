@@ -9,6 +9,8 @@
 
 using std::max;
 
+#define THRESHOLD (Dtype) 0.0
+
 namespace caffe {
 
   template <typename Dtype>
@@ -17,7 +19,24 @@ namespace caffe {
     CHECK_EQ(bottom.size(), 1) << "ReLUPlus Layer takes a single blob as input.";
     CHECK_EQ(top->size(), 1) << "ReLUPlus Layer takes a single blob as output.";
     //initialize activation
-    this->activation_->CopyFrom(*(bottom[0]), false, true);
+    LOG(INFO)<<"setting up ReLUPlus Layer";
+    LOG(INFO)<<"size of relu_plus: "<<bottom[0]->num()<< " "<< bottom[0]->channels() 
+	     <<" "<<bottom[0]->height()<<" "<<bottom[0]->width();
+    this->activation_ = new Blob<Dtype>(bottom[0]->num(), bottom[0]->channels(), 
+					bottom[0]->height(), bottom[0]->width());
+    //this->activation_->CopyFrom(*(bottom[0]), false, true);
+    for(int idx = 0; idx < this->activation_->count(); ++idx) {
+      *(this->activation_->mutable_cpu_data() + idx) = (Dtype) 1.;
+    }
+
+    if ((*top)[0] != bottom[0]) {
+      (*top)[0]->Reshape(bottom[0]->num(), bottom[0]->channels(),
+			 bottom[0]->height(), bottom[0]->width());
+    }
+  }
+
+  template<typename Dtype>
+  void ReLUPlusLayer<Dtype>::Reset(){
     for(int idx = 0; idx < this->activation_->count(); ++idx) {
       *(this->activation_->mutable_cpu_data() + idx) = (Dtype) 1.;
     }
@@ -90,13 +109,13 @@ namespace caffe {
 	Dtype _value = *(input_data + input[0]->offset(m) + offset);
 	Dtype top_filter_value = *(top_filter->cpu_data() + 
 				   top_filter->offset(m) + offset);
-	if(_value <= 0 || top_filter_value <= 0) {
+	if(_value <= 0 || top_filter_value <= THRESHOLD) {
 	  //set activation
 	  *(activation_data + offset + this->activation_->offset(m)) = (Dtype) 0.;
 	  //select neurons
 	  *(eq_filter_data + offset + this->eq_filter_->offset(m)) = (Dtype) 0.;
 	}
-	else if(_value > 0 && top_filter_value > 0){
+	else if(_value > 0 && top_filter_value > THRESHOLD){
 	  *(activation_data + offset + this->activation_->offset(m)) = (Dtype) 1.;
 	  *(eq_filter_data + offset + this->eq_filter_->offset(m)) = top_filter_value;
 	}

@@ -74,8 +74,9 @@ Dtype LRNLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
 // TODO: check if it would be faster to just put it into the previous kernel.
 template <typename Dtype>
 __global__ void LRNComputeOutput(const int nthreads, const Dtype* in,
-    const Dtype* scale, const Dtype negative_beta, Dtype* out) {
+    const Dtype* scale, const Dtype negative_beta, Dtype* out, Dtype* weights) {
   CUDA_KERNEL_LOOP(index, nthreads) {
+    weights[index] = pow(scale[index], negative_beta);
     out[index] = in[index] * pow(scale[index], negative_beta);
   }
 }
@@ -83,6 +84,7 @@ __global__ void LRNComputeOutput(const int nthreads, const Dtype* in,
 template <typename Dtype>
 Dtype LRNLayer<Dtype>::CrossChannelForward_gpu(
     const vector<Blob<Dtype>*>& bottom, vector<Blob<Dtype>*>* top) {
+  this->weights_.CopyFrom(*(*top)[0], false, true);
   // First, compute scale
   const Dtype* bottom_data = bottom[0]->gpu_data();
   Dtype* top_data = (*top)[0]->mutable_gpu_data();
@@ -98,22 +100,12 @@ Dtype LRNLayer<Dtype>::CrossChannelForward_gpu(
   n_threads = bottom[0]->count();
   // NOLINT_NEXT_LINE(whitespace/operators)
   //COPY DATA:
-  this->weights_.CopyFrom(*(*top)[0], false, true);
+
+  Dtype* weight_data = this->weights_.mutable_gpu_data();
   LRNComputeOutput<<<CAFFE_GET_BLOCKS(n_threads), CAFFE_CUDA_NUM_THREADS>>>(
-      n_threads, bottom_data, scale_data, -beta_, top_data);
+      n_threads, bottom_data, scale_data, -beta_, top_data, weight_data);
   CUDA_POST_KERNEL_CHECK;
 
-
-  //store the weights
-  const Dtype* c_bottom_data = bottom[0]->cpu_data();
-  Dtype* c_top_data = (*top)[0]->mutable_cpu_data();
-  weights_.CopyFrom(*((*top)[0]), false, true);
-  Dtype* weight_data = weights_.mutable_cpu_data();
-  for (int n = 0; n<bottom[0]->count(); ++n) {
-      Dtype bottom_val = *(c_bottom_data + n);
-      Dtype top_val = *(c_top_data + n);
-      *(weight_data + n) = ((bottom_val > ESP || bottom_val < -ESP ) ? (Dtype) 0. : (top_val / bottom_val));
-  }
   return Dtype(0.);
 }
 

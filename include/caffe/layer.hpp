@@ -62,6 +62,8 @@ class Layer {
   virtual void UpdateEqFilter(const Blob<Dtype>* top_filter,
       const vector<Blob<Dtype>*>& input){}
 
+  virtual void Reset(){}
+
  protected:
   // The protobuf that stores the layer parameters
   LayerParameter layer_param_;

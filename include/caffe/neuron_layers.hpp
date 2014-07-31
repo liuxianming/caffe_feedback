@@ -182,6 +182,7 @@ namespace caffe {
 
     virtual void UpdateEqFilter(const Blob<Dtype>* top_filter,
 				const vector<Blob<Dtype>*>& input);
+    virtual void Reset();
   protected:
     //The data member that records activations of neurons
     Blob<Dtype>* activation_;

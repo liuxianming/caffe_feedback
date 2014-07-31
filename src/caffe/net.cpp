@@ -245,6 +245,11 @@ template <typename Dtype>
 const vector<Blob<Dtype>*>& Net<Dtype>::ForwardPrefilled(Dtype* loss) {
   //set the flag
   forwardCompleteFlag = true;
+  //reset layers
+  for (int i = 0; i < layers_.size(); ++i) {
+    layers_[i]->Reset();
+  }
+  
 
   if (loss != NULL) {
     *loss = Dtype(0.);

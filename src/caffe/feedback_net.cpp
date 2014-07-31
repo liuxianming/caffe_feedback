@@ -137,7 +137,7 @@ namespace caffe{
     for(int n = 0; n<this->visualization_->num(); ++n) {
       for (int c = 0; c<this->visualization_->channels(); c++) {
 	ImageNormalization<Dtype>(this->visualization_->mutable_cpu_data() + this->visualization_->offset(n, c),
-				  this->visualization_->offset(0,1), (Dtype)128);
+				  this->visualization_->offset(0,1), (Dtype)100);
       }
     }
   }
@@ -193,9 +193,19 @@ namespace caffe{
     for(int n = 0; n<this->visualization_->num(); ++n) {
         for (int c = 0; c<this->visualization_->channels(); c++) {
             ImageNormalization<Dtype>(this->visualization_->mutable_cpu_data() + this->visualization_->offset(n, c),
-                this->visualization_->offset(0,1), (Dtype)128);
+                this->visualization_->offset(0,1), (Dtype)100);
         }
     }
+    
+    /*
+    //Normalization:
+    for(int n = 0; n<this->visualization_->num(); ++n) {
+      ImageNormalization<Dtype>(this->visualization_->mutable_cpu_data() 
+				+ this->visualization_->offset(n),
+				this->visualization_->count() / this->visualization_->num(),
+				(Dtype)100);
+    }
+    */
   }
 
   template<typename Dtype>
