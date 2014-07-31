@@ -18,8 +18,8 @@ int main(int argc, char** argv){
   //::google::InitGoogleLogging(argv[0]);
 
   Caffe::set_phase(Caffe::TEST);
-  if (argc < 3 || argc > 5){
-      LOG(ERROR)<<"test_data_to_image net_proto pretrained_net_proto [data_mean_proto]";
+  if (argc < 3 || argc > 6){
+      LOG(ERROR)<<"test_data_to_image net_proto pretrained_net_proto number_of_iterations starting_layer [Top K]";
       return 1;
   }
 
@@ -39,8 +39,13 @@ int main(int argc, char** argv){
       bool test_flag = false;
       //start feedback
       //caffe_test_net.Visualize("conv3", 5, 3, 3, test_flag);
+      string startLayer(argv[4]);
+      int topK = 1;
+      if(argc == 6){
+	topK = atoi(argv[5]);
+      }
       LOG(INFO)<<"Start visualization";
-      caffe_test_net.VisualizeTopKNeurons("fc8", 1, true);
+      caffe_test_net.VisualizeTopKNeurons(startLayer, topK, true);
 
       if(test_flag == false){
           Blob<float>* visualization = caffe_test_net.GetVisualization();

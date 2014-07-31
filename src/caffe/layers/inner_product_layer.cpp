@@ -9,6 +9,8 @@
 #include "caffe/vision_layers.hpp"
 #include "caffe/util/math_functions.hpp"
 
+#define GPUMODE true
+
 namespace caffe {
 
   template <typename Dtype>
@@ -107,19 +109,25 @@ namespace caffe {
 
     this->eq_filter_ = new Blob<Dtype>(input[0]->num(), 1, top_output_num, inputsize);
 
-    const Dtype* top_filter_data = top_filter->cpu_data();
+    const Dtype* top_filter_data = (GPUMODE ? top_filter->gpu_data() : top_filter->cpu_data());
 
-    const Dtype* weight_data = this->blobs_[0]->cpu_data();
-    Dtype* eq_filter_data = this->eq_filter_->mutable_cpu_data();
+    const Dtype* weight_data = (GPUMODE ? this->blobs_[0]->gpu_data() : this->blobs_[0]->cpu_data());
+    Dtype* eq_filter_data = (GPUMODE ? this->eq_filter_->mutable_gpu_data() : this->eq_filter_->mutable_gpu_data());
 
     //each input image may generate different filters
     for (int i = 0; i<this->eq_filter_->num(); i++){
         //Calculate the eq_filter_ by using matrix multiplication:
         //eq_filter_ = top_filter * weights (blobs_)
+      if(GPUMODE){
+	caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasTrans, 
+			      top_output_num, K_, N_, (Dtype)1., top_filter_data, weight_data, (Dtype)0., eq_filter_data);
+      }
+      else{
         caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasTrans,
-            top_output_num, K_, N_, (Dtype)1., top_filter_data, weight_data, (Dtype)0., eq_filter_data);
-        top_filter_data += top_filter->offset(1);
-        eq_filter_data += this->eq_filter_->offset(1);
+			      top_output_num, K_, N_, (Dtype)1., top_filter_data, weight_data, (Dtype)0., eq_filter_data);
+      }
+      top_filter_data += top_filter->offset(1);
+      eq_filter_data += this->eq_filter_->offset(1);
     }
   }
 
