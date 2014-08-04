@@ -134,7 +134,7 @@ namespace caffe{
 	ImageNormalization<Dtype>(this->visualization_->mutable_cpu_data() 
 				  + this->visualization_->offset(n, c),
 				  this->visualization_->offset(0,1), 
-				  (Dtype)100, (Dtype)100);
+				  (Dtype)100, (Dtype)20.0);
       }
     }
   }
@@ -209,7 +209,7 @@ namespace caffe{
             ImageNormalization<Dtype>(this->visualization_->mutable_cpu_data() 
 				      + this->visualization_->offset(n, c),
 				      this->visualization_->offset(0,1), 
-				      (Dtype)100, (Dtype) 100);
+				      (Dtype)100, (Dtype) 20);
         }
     }
   }

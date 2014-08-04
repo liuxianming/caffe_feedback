@@ -46,7 +46,7 @@ int main(int argc, char** argv){
       }
       LOG(INFO)<<"Start visualization";
       if(topK > 0){      
-	caffe_test_net.VisualizeTopKNeurons(startLayer, topK, true);
+	caffe_test_net.VisualizeTopKNeurons(startLayer, topK, false);
       }
       else{
 	srand(time(NULL));
