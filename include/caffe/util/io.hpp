@@ -85,7 +85,7 @@ template<typename Dtype>
 void WriteDataToImage(string filename, const int channel, const int height, const int width, Dtype* data);
 
 template<typename Dtype>
-void ImageNormalization(Dtype* imgData, int len, Dtype mean);
+void ImageNormalization(Dtype* imgData, int len, Dtype mean, Dtype scaler=(Dtype) 1.);
 
 }  // namespace caffe
 

@@ -27,16 +27,6 @@ namespace caffe{
 
   template<typename Dtype>
   void FeedbackNet<Dtype>::InitVisualization(){
-    //setup the eq_filter_ flow 
-    /*
-     * Follow the similar work flow as in Net.Init(),
-     * which generates input blobs and output blobs for layers.
-     * As for the input of each layer used for updating eq_filter_, 
-     * use the same input as feed-forward process
-     * The layer on the top of the whole network does not has eq_filter_top.
-     * Since the feedforward processes the layers in layers_ one by one,
-     * the feedback will follow the reverse order
-     */
   }
 
   template<typename Dtype>
@@ -49,15 +39,18 @@ namespace caffe{
     Blob<Dtype>* eq_filter_output  = this->eq_filter_top_.back();
     //Re-organize the eq_filter_output to get this->visualization_
     Blob<Dtype>* input_blob = (this->blobs_[0]).get();
-    Blob<Dtype>* _visualization = new Blob<Dtype>(input_blob->num(), input_blob->channels(),
-						  input_blob->height(), input_blob->width());
-    memcpy(_visualization->mutable_cpu_data(), eq_filter_output->cpu_data(), sizeof(Dtype)*eq_filter_output->count());
+    Blob<Dtype>* _visualization 
+      = new Blob<Dtype>(input_blob->num(), input_blob->channels(),
+			input_blob->height(), input_blob->width());
+    memcpy(_visualization->mutable_cpu_data(), eq_filter_output->cpu_data(), 
+	   sizeof(Dtype)*eq_filter_output->count());
     if(weight_flag) {
       //Find weight
       Blob<Dtype>* _filter_output = (this->top_vecs_[startLayerIdx_])[0];
       Dtype* output_weights = new Dtype[_filter_output->num()];
       for(int i = 0; i<_filter_output->num(); ++i) {
-	output_weights[i] = *(_filter_output->mutable_cpu_data() + _filter_output->offset(i, startChannelIdx) + startOffset);
+	output_weights[i] = *(_filter_output->mutable_cpu_data() 
+			      + _filter_output->offset(i, startChannelIdx) + startOffset);
       }
       _visualization->multiply( output_weights);
     }
@@ -138,8 +131,10 @@ namespace caffe{
     //Normalization:
     for(int n = 0; n<this->visualization_->num(); ++n) {
       for (int c = 0; c<this->visualization_->channels(); c++) {
-	ImageNormalization<Dtype>(this->visualization_->mutable_cpu_data() + this->visualization_->offset(n, c),
-				  this->visualization_->offset(0,1), (Dtype)100);
+	ImageNormalization<Dtype>(this->visualization_->mutable_cpu_data() 
+				  + this->visualization_->offset(n, c),
+				  this->visualization_->offset(0,1), 
+				  (Dtype)100, (Dtype)100);
       }
     }
   }
@@ -182,15 +177,16 @@ namespace caffe{
   }
 
   template<typename Dtype>
-  void FeedbackNet<Dtype>::VisualizeTopKNeurons(int startLayerIdx, int k, bool weight_flag) {
+  void FeedbackNet<Dtype>::VisualizeTopKNeurons(int startLayerIdx, int k, bool weight_flag){
     this->startLayerIdx_ = startLayerIdx;
     if(this->blobs_[0]->num() > 1){
       LOG(ERROR)<<"This function only supports the input batch with size 1";
       return;
     }
     Blob<Dtype>* input_blob = (this->blobs_[0]).get();
-    Blob<Dtype>* _visualization = new Blob<Dtype>(input_blob->num(), input_blob->channels(),
-						  input_blob->height(), input_blob->width());
+    Blob<Dtype>* _visualization 
+      = new Blob<Dtype>(input_blob->num(), input_blob->channels(),
+			input_blob->height(), input_blob->width());
     memset(_visualization->mutable_cpu_data(), 0, sizeof(Dtype)*_visualization->count());
 
     int* channel_offset = new int[k];
@@ -201,7 +197,9 @@ namespace caffe{
       this->startChannelIdx_ = channel_offset[i];
       this->startOffset_ = in_channel_offset[i];
       _visualization ->add(*(VisualizeSingleNeuron(startLayerIdx, 
-						   this->startChannelIdx_, this->startOffset_, weight_flag)));
+						   this->startChannelIdx_, 
+						   this->startOffset_, 
+						   weight_flag)));
     }
     this->visualization_ = _visualization;
 
@@ -210,7 +208,8 @@ namespace caffe{
         for (int c = 0; c<this->visualization_->channels(); c++) {
             ImageNormalization<Dtype>(this->visualization_->mutable_cpu_data() 
 				      + this->visualization_->offset(n, c),
-				      this->visualization_->offset(0,1), (Dtype)100);
+				      this->visualization_->offset(0,1), 
+				      (Dtype)100, (Dtype) 100);
         }
     }
   }
@@ -221,8 +220,9 @@ namespace caffe{
     int output_layer_height = (this->top_vecs_[startLayerIdx])[0]->height();
 
     Blob<Dtype>* input_blob = (this->blobs_[0]).get();
-    Blob<Dtype>* _visualization = new Blob<Dtype>(input_blob->num(), input_blob->channels(),
-						  input_blob->height(), input_blob->width());
+    Blob<Dtype>* _visualization 
+      = new Blob<Dtype>(input_blob->num(), input_blob->channels(),
+			input_blob->height(), input_blob->width());
     memset(_visualization->mutable_cpu_data(), 0, sizeof(Dtype)*_visualization->count());
 
     if(heightOffset < 0 || heightOffset >= output_layer_height) {
@@ -231,7 +231,8 @@ namespace caffe{
     else{
         for (int i = 0; i<output_layer_width; ++i) {
             int startOffset = i + output_layer_width * heightOffset;
-            _visualization->add(*(VisualizeSingleNeuron(startLayerIdx, startChannelIdx, startOffset, true)));
+            _visualization->add(*(VisualizeSingleNeuron(startLayerIdx, startChannelIdx, 
+							startOffset, true)));
         }
     }
     return _visualization;
@@ -243,8 +244,9 @@ namespace caffe{
     int output_layer_height = (this->top_vecs_[startLayerIdx])[0]->height();
 
     Blob<Dtype>* input_blob = (this->blobs_[0]).get();
-    Blob<Dtype>* _visualization = new Blob<Dtype>(input_blob->num(), input_blob->channels(),
-						  input_blob->height(), input_blob->width());
+    Blob<Dtype>* _visualization 
+      = new Blob<Dtype>(input_blob->num(), input_blob->channels(),
+			input_blob->height(), input_blob->width());
     memset(_visualization->mutable_cpu_data(), 0, sizeof(Dtype)*_visualization->count());
 
     if(widthOffset < 0 || widthOffset >= output_layer_width) {
@@ -253,7 +255,8 @@ namespace caffe{
     else{
         for (int i = 0; i<output_layer_height; ++i) {
             int startOffset = i + output_layer_width + widthOffset;;
-            _visualization->add(*(VisualizeSingleNeuron(startLayerIdx, startChannelIdx, startOffset, true)));
+            _visualization->add(*(VisualizeSingleNeuron(startLayerIdx, startChannelIdx, 
+							startOffset, true)));
         }
     }
     return _visualization;
@@ -264,7 +267,10 @@ namespace caffe{
     //Generate the top_filter_ for the start layer of visualization
     //The output of the top_filter is only one neuron,
     Blob<Dtype>* _top_output_blob = (this->top_vecs_[startLayerIdx_])[0];
-    long _input_num = _top_output_blob->channels() * _top_output_blob->height() * _top_output_blob->width();
+    long _input_num 
+      = _top_output_blob->channels() 
+      * _top_output_blob->height()
+      * _top_output_blob->width();
     long channel_offset = _top_output_blob->height() * _top_output_blob->width();
     long _img_num = this->blobs_[0]->num();
 
@@ -276,7 +282,8 @@ namespace caffe{
     memset(start_top_filter_data, 0, sizeof(Dtype) * start_top_filter_->count());
 
     for (int n = 0; n<start_top_filter_->num(); n++) {
-      *(start_top_filter_data + channel_offset * this->startChannelIdx_ + startOffset) = Dtype(1.);
+      *(start_top_filter_data + channel_offset * this->startChannelIdx_ + startOffset) 
+	= Dtype(1.);
       start_top_filter_data += start_top_filter_->offset(1, 0);
     }
   }
@@ -297,7 +304,8 @@ namespace caffe{
       bool test_flag = false;
       if (test_flag) {
 	Dtype error = test_eq_filter(i, this->eq_filter_top_.back());
-	LOG(INFO)<<"Error of Layer "<<this->layer_names_[i]<<" is "<<error<<" : "<<((error < (Dtype) 16.) ? "OK" : "FAIL");
+	LOG(INFO)<<"Error of Layer "<<this->layer_names_[i]<<" is "
+		 <<error<<" : "<<((error < (Dtype) 16.) ? "OK" : "FAIL");
       }
     }
   }
@@ -326,7 +334,8 @@ namespace caffe{
 	  const int _width = visualization_->width();
 	  const int _channel = visualization_->channels();
 	  WriteDataToImage<Dtype>(filename, _channel, _height, _width,
-			   visualization_->mutable_cpu_data() + visualization_->offset(n, c) );
+				  visualization_->mutable_cpu_data() 
+				  + visualization_->offset(n, c) );
 	}
       }
     }
@@ -337,8 +346,12 @@ namespace caffe{
     Blob<Dtype>* feedforward_output_blob = (this->top_vecs_[this->startLayerIdx_])[0];
 
     Blob<Dtype>* input_blob = (this->bottom_vecs_[_layer_idx])[0];
-    LOG(INFO)<<"Testing using blob "<<this->blob_names_[this->bottom_id_vecs_[_layer_idx][0]] <<" as input";
-    LOG(INFO)<<"Size: "<<input_blob->channels() << " * " << input_blob->height() << " * "<<input_blob->width();
+    LOG(INFO)<<"Testing using blob "
+	     <<this->blob_names_[this->bottom_id_vecs_[_layer_idx][0]] <<" as input";
+    LOG(INFO)<<"Size: "
+	     <<input_blob->channels() 
+	     << " * " << input_blob->height() 
+	     << " * "<<input_blob->width();
     Dtype error = (Dtype) 0.;
 
     for(int n = 0; n<input_blob->num(); ++n) {
@@ -407,7 +420,7 @@ namespace caffe{
       for(int i = 0; i<k; i++){
           Dtype value = *(top_output_blob->cpu_data()
               + top_output_blob->offset(n, k_channel[i]) + k_offset[i]);
-          convert << k_channel[i] <<":"<< value << " ";
+          convert <<"[Channel: " <<k_channel[i] <<":"<< value << "] ";
       }
       string values = convert.str();
       LOG(INFO)<<values;
@@ -418,11 +431,10 @@ namespace caffe{
       UpdateEqFilter(startLayerIdx, channel, offset);
       //Forward - don't deal with data layer
       for (int i = 1; i < this->layers_.size(); ++i) {
-	Dtype layer_loss = this->layers_[i]->Forward(this->bottom_vecs_[i], &(this->top_vecs_[i]));
+	Dtype layer_loss 
+	  = this->layers_[i]->Forward(this->bottom_vecs_[i], &(this->top_vecs_[i]));
       }
-      ///*
-      SearchTopKNeurons(startLayerIdx, 5, k_channel, k_offset);
-      //*/
+      SearchTopKNeurons(startLayerIdx, k, k_channel, k_offset);
       LOG(INFO)<<"Feedback Iteration"<<iteration;
       Dtype new_output_sum = (Dtype) 0.;
       for(int n = 0; n<top_output_blob->num(); ++n){
@@ -441,7 +453,8 @@ namespace caffe{
       }
       iteration ++;
       Dtype converge = (output_sum - new_output_sum) * (output_sum - new_output_sum);
-      if(converge <= 1){
+      if(converge <= 1 || iteration > 5){
+	//Doesnot allow too many iterations
 	LOG(INFO)<<"Converge in " <<iteration << " iterations!";
 	break;
       }

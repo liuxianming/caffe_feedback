@@ -57,31 +57,10 @@ int main(int argc, char** argv){
       if(test_flag == false){
           Blob<float>* visualization = caffe_test_net.GetVisualization();
 
-	  //std::ostringstream convert;
-	  //convert << iter <<"_";
-	  //string prefix = convert.str();
-	  //caffe_test_net.DrawVisualization("./", prefix);
-
-	  float* imagedata = new float[visualization->count()];
-
-          for(int n = 0; n<visualization->num(); n++) {
-	    //visualize the i-th image
-	    float* blobdata = visualization->mutable_cpu_data() + visualization->offset(n);
-	    for (int i=0; i<visualization->count(); i++){
-	      *(imagedata+i) = *(blobdata + i) ;
-	    }
-	    std::ostringstream convert;
-	    convert << iter <<"_"<<n <<".jpg";
-	    string filename = convert.str();
-	    caffe::WriteDataToImage<float>(filename,
-					   visualization->channels(),
-					   visualization->height(),
-					   visualization->width(),
-					   imagedata
-					   );
-          }
-          //clear
-          delete [] imagedata;
+	  std::ostringstream convert;
+	  convert << iter <<"_";
+	  string prefix = convert.str();
+	  caffe_test_net.DrawVisualization("./", prefix);
       }
   }
   LOG(INFO)<<"Done";
