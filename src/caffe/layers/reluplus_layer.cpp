@@ -6,6 +6,7 @@
 #include "caffe/neuron_layers.hpp"
 #include "caffe/layer.hpp"
 #include "caffe/vision_layers.hpp"
+#include "caffe/util/math_functions.hpp"
 
 using std::max;
 
@@ -25,10 +26,7 @@ namespace caffe {
     this->activation_ = new Blob<Dtype>(bottom[0]->num(), bottom[0]->channels(), 
 					bottom[0]->height(), bottom[0]->width());
     //this->activation_->CopyFrom(*(bottom[0]), false, true);
-    for(int idx = 0; idx < this->activation_->count(); ++idx) {
-      *(this->activation_->mutable_cpu_data() + idx) = (Dtype) 1.;
-    }
-
+    Reset();
     if ((*top)[0] != bottom[0]) {
       (*top)[0]->Reshape(bottom[0]->num(), bottom[0]->channels(),
 			 bottom[0]->height(), bottom[0]->width());
@@ -51,8 +49,10 @@ namespace caffe {
     const int count = bottom[0]->count();
     //Use activation to active each neuron, which remebers the feedback status
     for (int i = 0; i < count; ++i) {
-      top_data[i] = max(bottom_data[i] * activation_data[i], Dtype(0));
+      top_data[i] = max(bottom_data[i], Dtype(0));
     }
+    //Apply activation
+    caffe_mul(bottom[0]->count(), top_data, activation_data, top_data);
     return Dtype(0);
   }
 
@@ -109,18 +109,23 @@ namespace caffe {
 	Dtype _value = *(input_data + input[0]->offset(m) + offset);
 	Dtype top_filter_value = *(top_filter->cpu_data() + 
 				   top_filter->offset(m) + offset);
-	if(_value <= 0 || top_filter_value <= THRESHOLD) {
+	if(_value <= 0){
+	  *(eq_filter_data + offset + this->eq_filter_->offset(m)) 
+	    = (Dtype) 0.;
+	}
+	if(top_filter_value <= THRESHOLD) {
 	  //set activation
 	  *(activation_data + offset + this->activation_->offset(m)) = (Dtype) 0.;
-	  //select neurons
-	  *(eq_filter_data + offset + this->eq_filter_->offset(m)) = (Dtype) 0.;
 	}
-	else if(_value > 0 && top_filter_value > THRESHOLD){
+	/*
+	else if(top_filter_value > THRESHOLD){
 	  *(activation_data + offset + this->activation_->offset(m)) = (Dtype) 1.;
-	  *(eq_filter_data + offset + this->eq_filter_->offset(m)) = top_filter_value;
 	}
+	*/
       }//for each input element
     }// for each image in the mini-batch
+    //Apply activation to eq_filter
+    caffe_mul(this->eq_filter_->count(), eq_filter_data, activation_data, eq_filter_data);
   }
 
   INSTANTIATE_CLASS(ReLUPlusLayer);

@@ -2,7 +2,7 @@
 //Used to test the function of image output from data blobs
 
 #include <cuda_runtime.h>
-
+#include <time.h>
 #include <cstring>
 #include <cstdlib>
 #include <vector>
@@ -32,21 +32,28 @@ int main(int argc, char** argv){
   for(int iter = 0; iter < atoi(argv[3]); ++iter){
       //Forward process using FeedbackNet
       LOG(INFO)<<"Processing image feedforward...";
-      const vector<Blob<float>*>& result = caffe_test_net.ForwardPrefilled();
+      const vector<Blob<float>*>& result = caffe_test_net.FeedbackForwardPrefilled("fc8");
+      //const vector<Blob<float>*>& result = caffe_test_net.ForwardPrefilled();
       LOG(INFO)<<"Feedforward complete!";
       Blob<float>* input_img = (caffe_test_net.blobs()[0]).get();
 
       bool test_flag = false;
       //start feedback
-      //caffe_test_net.Visualize("conv3", 5, 3, 3, test_flag);
       string startLayer(argv[4]);
       int topK = 1;
       if(argc == 6){
 	topK = atoi(argv[5]);
       }
       LOG(INFO)<<"Start visualization";
-      caffe_test_net.VisualizeTopKNeurons(startLayer, topK, true);
-
+      if(topK > 0){      
+	caffe_test_net.VisualizeTopKNeurons(startLayer, topK, true);
+      }
+      else{
+	srand(time(NULL));
+	int rand_idx = rand() % 1000;
+	LOG(INFO)<<"Using Random Neurons: "<<rand_idx;
+	caffe_test_net.Visualize(startLayer, rand_idx, 0, 0, test_flag);
+      }
       if(test_flag == false){
           Blob<float>* visualization = caffe_test_net.GetVisualization();
 

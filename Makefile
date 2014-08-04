@@ -167,7 +167,7 @@ ifeq ($(OSX), 1)
 endif
 
 # Debugging
-DEBUG ?= 0
+DEBUG ?= 1
 ifeq ($(DEBUG), 1)
 	COMMON_FLAGS := -DDEBUG -g -O0
 else

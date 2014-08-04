@@ -26,12 +26,6 @@ layers {
   top: "conv1"
 }
 layers {
-  name: "relu1"
-  type: RELUPLUS
-  bottom: "conv1"
-  top: "relu1"
-}
-layers {
   name: "norm1"
   type: LRN
   lrn_param {
@@ -39,7 +33,7 @@ layers {
     alpha: 0.0001
     beta: 0.75
   }
-  bottom: "relu1"
+  bottom: "conv1"
   top: "norm1"
 }
 layers {
@@ -54,6 +48,12 @@ layers {
   top: "pool1"
 }
 layers {
+  name: "relu1"
+  type: RELUPLUS
+  bottom: "pool1"
+  top: "relu1"
+}
+layers {
   name: "conv2"
   type: CONVOLUTION
   convolution_param {
@@ -62,14 +62,8 @@ layers {
     kernel_size: 5
     group: 2
   }
-  bottom: "pool1"
+  bottom: "relu1"
   top: "conv2"
-}
-layers {
-  name: "relu2"
-  type: RELUPLUS
-  bottom: "conv2"
-  top: "relu2"
 }
 layers {
   name: "norm2"
@@ -79,7 +73,7 @@ layers {
     alpha: 0.0001
     beta: 0.75
   }
-  bottom: "relu2"
+  bottom: "conv2"
   top: "norm2"
 }
 layers {
@@ -94,6 +88,12 @@ layers {
   top: "pool2"
 }
 layers {
+  name: "relu2"
+  type: RELUPLUS
+  bottom: "pool2"
+  top: "relu2"
+}
+layers {
   name: "conv3"
   type: CONVOLUTION
   convolution_param {
@@ -101,7 +101,7 @@ layers {
     pad: 1
     kernel_size: 3
   }
-  bottom: "pool2"
+  bottom: "relu2"
   top: "conv3"
 }
 layers {
@@ -141,12 +141,6 @@ layers {
   top: "conv5"
 }
 layers {
-  name: "relu5"
-  type: RELUPLUS
-  bottom: "conv5"
-  top: "relu5"
-}
-layers {
   name: "pool5"
   type: POOLING
   pooling_param {
@@ -154,8 +148,14 @@ layers {
     kernel_size: 3
     stride: 2
   }
-  bottom: "relu5"
+  bottom: "conv5"
   top: "pool5"
+}
+layers {
+  name: "relu5"
+  type: RELUPLUS
+  bottom: "pool5"
+  top: "relu5"
 }
 layers {
   name: "fc6"
@@ -163,7 +163,7 @@ layers {
   inner_product_param {
     num_output: 4096
   }
-  bottom: "pool5"
+  bottom: "relu5"
   top: "fc6"
 }
 layers {

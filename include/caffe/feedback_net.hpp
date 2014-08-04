@@ -24,6 +24,12 @@ namespace caffe{
 
     void UpdateEqFilter();
 
+    void UpdateEqFilter(int startLayerIdx, 
+			int startChannelIdx, 
+			int startOffset);
+
+    void SearchTopKNeurons(int startLayerIdx, int k, int* channel_offset, int* in_channel_offset);
+
     // By default, the visualization results are straight to the input layer
     // (input_blobs_ as in the father class: Net)
     // Default parameter:
@@ -43,6 +49,9 @@ namespace caffe{
 
     //Member function
     void InitVisualization();
+
+    const vector<Blob<Dtype>*>& FeedbackForwardPrefilled(Dtype* loss = NULL, int startLayerIdx = -1, int channel = -1, int offset = -1);
+    const vector<Blob<Dtype>*>& FeedbackForwardPrefilled(string startLayer, int channel = -1, int offset = -1);
 
   protected:
     //void InitFeedback();
