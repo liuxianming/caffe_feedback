@@ -44,14 +44,21 @@ namespace caffe{
 			input_blob->height(), input_blob->width());
     memcpy(_visualization->mutable_cpu_data(), eq_filter_output->cpu_data(), 
 	   sizeof(Dtype)*eq_filter_output->count());
+    //Find weight
+    Blob<Dtype>* _filter_output = (this->top_vecs_[startLayerIdx_])[0];
+    Dtype* output_weights = new Dtype[_filter_output->num()];
+    for(int i = 0; i<_filter_output->num(); ++i) {
+      output_weights[i] = *(_filter_output->mutable_cpu_data() 
+			    + _filter_output->offset(i, startChannelIdx) + startOffset);
+      //Test: to output the predicted values and the feedforward values
+      Dtype predict_value = caffe_cpu_dot(input_blob->count() / input_blob->num(),
+					  input_blob->cpu_data() + input_blob->offset(i),
+					  _visualization->cpu_data() 
+					  + _visualization->offset(i));
+      LOG(INFO)<<"The difference between predicted output and the feedforward output is: "
+	       <<predict_value<<" : "<<output_weights[i];
+    }
     if(weight_flag) {
-      //Find weight
-      Blob<Dtype>* _filter_output = (this->top_vecs_[startLayerIdx_])[0];
-      Dtype* output_weights = new Dtype[_filter_output->num()];
-      for(int i = 0; i<_filter_output->num(); ++i) {
-	output_weights[i] = *(_filter_output->mutable_cpu_data() 
-			      + _filter_output->offset(i, startChannelIdx) + startOffset);
-      }
       _visualization->multiply( output_weights);
     }
     return _visualization;
@@ -71,7 +78,8 @@ namespace caffe{
   }
 
   template<typename Dtype>
-  void FeedbackNet<Dtype>::Visualize(int startLayerIdx, int startChannelIdx, int heightOffset, int widthOffset, bool test_flag){
+  void FeedbackNet<Dtype>::Visualize(int startLayerIdx, int startChannelIdx, 
+				     int heightOffset, int widthOffset, bool test_flag){
     //The visualization must be completed by performing Forward() in advance
     if (this->forwardCompleteFlag == false) {
       LOG(ERROR)<<"[Error] Have to input image into the network to complete visualization";
@@ -126,16 +134,6 @@ namespace caffe{
 	_visualization->add( *(VisualizeSingleRowNeurons(startLayerIdx, startChannelIdx, h)));
       }
       this->visualization_ = _visualization;
-    }
-
-    //Normalization:
-    for(int n = 0; n<this->visualization_->num(); ++n) {
-      for (int c = 0; c<this->visualization_->channels(); c++) {
-	ImageNormalization<Dtype>(this->visualization_->mutable_cpu_data() 
-				  + this->visualization_->offset(n, c),
-				  this->visualization_->offset(0,1), 
-				  (Dtype)100, (Dtype)20.0);
-      }
     }
   }
 
@@ -202,16 +200,6 @@ namespace caffe{
 						   weight_flag)));
     }
     this->visualization_ = _visualization;
-
-    //Normalization:
-    for(int n = 0; n<this->visualization_->num(); ++n) {
-        for (int c = 0; c<this->visualization_->channels(); c++) {
-            ImageNormalization<Dtype>(this->visualization_->mutable_cpu_data() 
-				      + this->visualization_->offset(n, c),
-				      this->visualization_->offset(0,1), 
-				      (Dtype)100, (Dtype) 20);
-        }
-    }
   }
 
   template<typename Dtype>
@@ -313,6 +301,15 @@ namespace caffe{
   template<typename Dtype>
   void FeedbackNet<Dtype>::DrawVisualization(string dir, string prefix) {
     std::ostringstream convert;
+    //Normalization:
+    for(int n = 0; n<this->visualization_->num(); ++n) {
+      for (int c = 0; c<this->visualization_->channels(); c++) {
+	ImageNormalization<Dtype>(this->visualization_->mutable_cpu_data() 
+				  + this->visualization_->offset(n, c),
+				  this->visualization_->offset(0,1), 
+				  (Dtype)100, (Dtype)20.0);
+      }
+    }
     for (int n = 0; n<visualization_->num(); n++) {
       convert<<dir<<prefix<<n;
       string filename = convert.str();
