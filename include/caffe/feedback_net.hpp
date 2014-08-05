@@ -50,8 +50,8 @@ namespace caffe{
     //Member function
     void InitVisualization();
 
-    const vector<Blob<Dtype>*>& FeedbackForwardPrefilled(Dtype* loss = NULL, int startLayerIdx = -1, int channel = -1, int offset = -1);
-    const vector<Blob<Dtype>*>& FeedbackForwardPrefilled(string startLayer, int channel = -1, int offset = -1);
+    const vector<Blob<Dtype>*>& FeedbackForwardPrefilled(Dtype* loss = NULL, int startLayerIdx = -1, int channel = -1, int offset = -1, int max_iterations = 5);
+    const vector<Blob<Dtype>*>& FeedbackForwardPrefilled(string startLayer, int channel = -1, int offset = -1, int max_iterations = 5);
 
   protected:
     //void InitFeedback();
