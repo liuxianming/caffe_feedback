@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 #include <fstream>  // NOLINT(readability/streams)
+#include <exception>
 
 #include "caffe/common.hpp"
 #include "caffe/util/io.hpp"
@@ -273,6 +274,53 @@ namespace caffe {
       else if(scaler > 0){
 	imgData[i] = imgData[i] * scaler + mean;
       }
+    }
+  }
+
+  //Write the data in blobs into text files named in filename
+  template<>
+  void writeDataToTxt<float>(string filename, Blob<float>* data){
+    try{
+      std::ofstream fn(filename.c_str(), std::ofstream::out);
+      const float* data_ptr = data->cpu_data();
+      for(int n = 0; n<data->num(); ++n){
+	for(int c = 0; c<data->channels(); ++c){
+	  for(int h = 0; h<data->height(); ++h){
+	    for(int w = 0; w<data->width(); ++w){
+	      fn<<*(data_ptr + h * data->width() + w)<<" ";
+	    }//each line
+	    fn<<"\n";
+	  }//each column
+	  data_ptr += data->offset(0,1);
+	}//each channel
+      }//each image
+      fn.close();
+    }//try
+    catch(int e){
+      LOG(ERROR)<<"Failed to open file";
+    }
+  }
+
+  template<>
+  void writeDataToTxt<double>(string filename, Blob<double>* data){
+    try{
+      std::ofstream fn(filename.c_str(), std::ofstream::out);
+      const double* data_ptr = data->cpu_data();
+      for(int n = 0; n<data->num(); ++n){
+	for(int c = 0; c<data->channels(); ++c){
+	  for(int h = 0; h<data->height(); ++h){
+	    for(int w = 0; w<data->width(); ++w){
+	      fn<<*(data_ptr + h * data->width() + w)<<" ";
+	    }
+	    fn<<"\n";
+	  }
+	  data_ptr += data->offset(0,1);
+	}
+      }
+      fn.close();
+    }
+    catch (int e){
+      LOG(ERROR)<<"Failed to open file";
     }
   }
 
