@@ -5,7 +5,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <cblas.h>
+// #include <cblas.h>
 #include <algorithm>
 
 #include "caffe/common.hpp"
