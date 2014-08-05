@@ -88,7 +88,6 @@ namespace caffe {
   template <typename Dtype>
   Dtype ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 					     vector<Blob<Dtype>*>* top) {
-    // bias_term_ = false;
     const Dtype* bottom_data = bottom[0]->cpu_data();
     Dtype* top_data = (*top)[0]->mutable_cpu_data();
     Dtype* col_data = col_buffer_.mutable_cpu_data();

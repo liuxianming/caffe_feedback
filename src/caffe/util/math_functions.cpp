@@ -3,10 +3,6 @@
 #include <boost/math/special_functions/next.hpp>
 #include <boost/random.hpp>
 #include <cublas_v2.h>
-<<<<<<< HEAD
-// #include <cblas.h>
-=======
->>>>>>> b4d2ff16f39562b498e108ebd294a676c378445d
 
 #include <limits>
 

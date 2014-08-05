@@ -5,10 +5,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-<<<<<<< HEAD
-// #include <cblas.h>
-=======
->>>>>>> b4d2ff16f39562b498e108ebd294a676c378445d
 #include <algorithm>
 
 #include "caffe/common.hpp"
