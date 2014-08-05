@@ -5,7 +5,10 @@
 #include <sstream>
 #include <string>
 #include <vector>
+<<<<<<< HEAD
 // #include <cblas.h>
+=======
+>>>>>>> b4d2ff16f39562b498e108ebd294a676c378445d
 #include <algorithm>
 
 #include "caffe/common.hpp"
@@ -367,13 +370,13 @@ namespace caffe{
   }
 
   template<typename Dtype>
-  const vector<Blob<Dtype>*>& FeedbackNet<Dtype>::FeedbackForwardPrefilled(string startLayer, int channel, int offset) {
+  const vector<Blob<Dtype>*>& FeedbackNet<Dtype>::FeedbackForwardPrefilled(string startLayer, int channel, int offset, int max_iterations) {
     int startLayerIdx = this->layer_names_index_[startLayer];
-    FeedbackForwardPrefilled(NULL, startLayerIdx, channel, offset);
+    FeedbackForwardPrefilled(NULL, startLayerIdx, channel, offset, max_iterations);
   }
 
   template<typename Dtype>
-  const vector<Blob<Dtype>*>& FeedbackNet<Dtype>::FeedbackForwardPrefilled(Dtype* loss, int startLayerIdx, int channel, int offset){
+  const vector<Blob<Dtype>*>& FeedbackNet<Dtype>::FeedbackForwardPrefilled(Dtype* loss, int startLayerIdx, int channel, int offset, int max_iterations){
     this->forwardCompleteFlag = true;
     int k = 5;
     int* k_channel = new int[k];
@@ -450,7 +453,7 @@ namespace caffe{
       }
       iteration ++;
       Dtype converge = (output_sum - new_output_sum) * (output_sum - new_output_sum);
-      if(converge <= 1 || iteration > 5){
+      if(converge <= 1 || iteration > max_iterations){
 	//Doesnot allow too many iterations
 	LOG(INFO)<<"Converge in " <<iteration << " iterations!";
 	break;
