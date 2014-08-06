@@ -112,20 +112,17 @@ namespace caffe {
     int N_ = height_out * width_out;
  
     size_t size_ = channels * kernel_size * kernel_size * height_out * width_out * sizeof(Dtype);
-    void* col_data = NULL; 
-    CUDA_CHECK(cudaMalloc(&col_data, size_));
-    /*
-    SyncedMemory* col_data_ = new SyncedMemory(channels * kernel_size * kernel_size * height_out * width_out * sizeof(Dtype));
+    //void* col_data = NULL; 
+    //CUDA_CHECK(cudaMalloc(&col_data, size_));
+    SyncedMemory* col_data_ = new SyncedMemory(size_);
     Dtype* col_data = reinterpret_cast<Dtype*>(col_data_->mutable_gpu_data());
-    */
     im2col_gpu(input, channels, height,
-        width, kernel_size, pad, stride, (Dtype*) col_data);
+        width, kernel_size, pad, stride, col_data);
     //Performing inner product
     caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, M_, N_, K_,
-        (Dtype)1., filter, (Dtype*) col_data,
+        (Dtype)1., filter, col_data,
         (Dtype)0., output);
-    //delete col_data_;
-    CUDA_CHECK(cudaFree(col_data));
+    delete col_data_;
   }
 
   INSTANTIATE_CLASS(ConvolutionLayer);
