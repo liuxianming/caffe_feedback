@@ -377,7 +377,6 @@ namespace caffe {
 	memcpy(output + original_offset, deconv_output + offset, sizeof(Dtype) * original_width);
       }
     }
-    delete deconv_output_;
   }
 
   INSTANTIATE_CLASS(ConvolutionLayer);
