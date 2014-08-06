@@ -17,10 +17,6 @@ class Blob {
        diff_() {}
   explicit Blob(const int num, const int channels, const int height,
     const int width);
-  ~Blob(){
-    delete data_.get();
-    delete diff_.get();
-  }
   void Reshape(const int num, const int channels, const int height,
     const int width);
   void ReshapeLike(const Blob& other);
