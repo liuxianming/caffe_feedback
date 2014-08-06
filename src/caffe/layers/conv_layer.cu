@@ -119,7 +119,7 @@ namespace caffe {
     Dtype* col_data = reinterpret_cast<Dtype*>(col_data_->mutable_gpu_data());
     */
     im2col_gpu(input, channels, height,
-        width, kernel_size, pad, stride, col_data);
+        width, kernel_size, pad, stride, (Dtype*) col_data);
     //Performing inner product
     caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, M_, N_, K_,
         (Dtype)1., filter, (Dtype*) col_data,
