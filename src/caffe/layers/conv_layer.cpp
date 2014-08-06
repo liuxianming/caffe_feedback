@@ -84,7 +84,6 @@ namespace caffe {
     }
     //Setting up the eq_filter
     this->eq_filter_ = new Blob<Dtype>(bottom[0]->num(), 1, 1, bottom[0]->channels() * bottom[0]->height() * bottom[0]->width());
-
     _r_filter = new Dtype[channels_ * kernel_size_ * kernel_size_ * num_output_];
   }
 
@@ -209,7 +208,7 @@ namespace caffe {
     int top_offset = M_ * N_;                   // Total size of output
     int eq_filter_offset = input_size / group_;
 
-    this->eq_filter_->Reshape(input[0]->num(), output_channel, output_size, input_size);
+    //this->eq_filter_->Reshape(input[0]->num(), output_channel, output_size, input_size);
     Dtype* eq_filter_data = this->eq_filter_->mutable_cpu_data();
     const Dtype* top_filter_data = top_filter->cpu_data();
     Dtype* filter_data = this->blobs_[0]->mutable_cpu_data();

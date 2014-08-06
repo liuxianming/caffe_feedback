@@ -98,6 +98,8 @@ namespace caffe {
     default:
       LOG(FATAL) << "Unknown normalization region.";
     }
+    //Setting up the eq_filter
+    this->eq_filter_ = new Blob<Dtype>(bottom[0]->num(), 1, 1, bottom[0]->channels() * bottom[0]->height() * bottom[0]->width());
   }
 
   template <typename Dtype>
@@ -276,9 +278,6 @@ namespace caffe {
   template<typename Dtype>
   void LRNLayer<Dtype>::UpdateEqFilter(const Blob<Dtype>* top_filter, 
 				       const vector<Blob<Dtype>*>& input){
-    this->eq_filter_ = new Blob<Dtype>(top_filter->num(), top_filter->channels(), 
-				       top_filter->height(), top_filter->width());
-
     Dtype* eq_filter_data = this->eq_filter_->mutable_cpu_data();
     const Dtype* weight_data = this->weights_.cpu_data();
     const Dtype* top_filter_data = top_filter->cpu_data(); 

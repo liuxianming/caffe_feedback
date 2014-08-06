@@ -23,6 +23,8 @@ namespace caffe {
     DCHECK(threshold_ < 1.);
     scale_ = 1. / (1. - threshold_);
     uint_thres_ = static_cast<unsigned int>(UINT_MAX * threshold_);
+    //Setup EqFilter
+    this->eq_filter_ = new Blob<Dtype>(bottom[0]->num(), 1, 1, bottom[0]->channels() * bottom[0]->height() * bottom[0]->width());
   }
 
   template <typename Dtype>
@@ -64,9 +66,7 @@ namespace caffe {
   void DropoutLayer<Dtype>::UpdateEqFilter(const Blob<Dtype>* top_filter,
 			      const vector<Blob<Dtype>*>& input) {
     //copy the eq_filter from input to this->eq_filter_
-    this->eq_filter_ = new Blob<Dtype>(top_filter->num(), top_filter->channels(), 
-				       top_filter->height(), top_filter->width());
-    this->eq_filter_->CopyFrom( *top_filter);
+    this->eq_filter_->CopyFrom( *top_filter, false, true);
   }
 
 

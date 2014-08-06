@@ -109,7 +109,7 @@ namespace caffe {
     int outputsize = top_filter->width();
     int inputsize = input[0]->count() / input[0]->num();
 
-    this->eq_filter_->Reshape(input[0]->num(), 1, top_output_num, inputsize);
+    //this->eq_filter_->Reshape(input[0]->num(), 1, top_output_num, inputsize);
 
     const Dtype* top_filter_data = (GPUMODE ? top_filter->gpu_data() : top_filter->cpu_data());
 
