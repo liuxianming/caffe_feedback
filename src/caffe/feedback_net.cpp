@@ -377,6 +377,17 @@ namespace caffe{
     return error;
   }
 
+  template <typename Dtype>
+  const vector<Blob<Dtype>*>& FeedbackNet<Dtype>::FeedbackForward(const vector<Blob<Dtype>*> & bottom, 
+								  Dtype* loss) {
+    // Copy bottom to internal bottom
+    for (int i = 0; i < bottom.size(); ++i) {
+      this->net_input_blobs_[i]->CopyFrom(*bottom[i]);
+    }
+    return FeedbackForwardPrefilled(loss);
+  }
+
+
   template<typename Dtype>
   const vector<Blob<Dtype>*>& FeedbackNet<Dtype>::FeedbackForwardPrefilled(string startLayer, int channel, int offset, int max_iterations) {
     int startLayerIdx = this->layer_names_index_[startLayer];

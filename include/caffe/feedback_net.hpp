@@ -51,6 +51,16 @@ namespace caffe{
     const vector<Blob<Dtype>*>& FeedbackForwardPrefilled(Dtype* loss = NULL, int startLayerIdx = -1, int channel = -1, int offset = -1, int max_iterations = 1);
     const vector<Blob<Dtype>*>& FeedbackForwardPrefilled(string startLayer, int channel = -1, int offset = -1, int max_iterations = 1);
 
+    const vector<Blob<Dtype>*>& FeedbackForward(const vector<Blob<Dtype>* > & bottom,
+					Dtype* loss = NULL);
+
+    Dtype FeedbackForwardBackward(const vector<Blob<Dtype>* > & bottom) {
+      Dtype loss;
+      FeedbackForward(bottom, &loss);
+      this->Backward();
+      return loss;
+    }
+
   protected:
     //void InitFeedback();
 
