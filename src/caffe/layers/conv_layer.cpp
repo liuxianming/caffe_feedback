@@ -95,7 +95,7 @@ namespace caffe {
     int _height = (s_height + 2*deconv_pad - kernel_size_ + 1);
     int _width = (s_width + 2*deconv_pad - kernel_size_ + 1);
     SyncedMemory* deconv_output_ = 
-      new SyncedMemory(channels * _height * _width * sizeof(Dtype));
+      new SyncedMemory(channels_ * _height * _width * sizeof(Dtype));
   }
 
 
