@@ -25,6 +25,9 @@ void SoftmaxLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
     multiplier_data[i] = 1.;
   }
   scale_.Reshape(bottom[0]->num(), 1, 1, 1);
+
+  //Setting up the eq_filter
+  this->eq_filter_ = new Blob<Dtype>(bottom[0]->num(), 1, 1, bottom[0]->channels() * bottom[0]->height() * bottom[0]->width());
 }
 
 template <typename Dtype>
@@ -86,7 +89,7 @@ template<typename Dtype>
 void SoftmaxLayer<Dtype>::UpdateEqFilter(const Blob<Dtype>* top_filter,
     const vector<Blob<Dtype>*>& input) {
   // The most simple implementation: pass the top_filter through
-  this->eq_filter_ = new Blob<Dtype>(top_filter->num(), top_filter->channels(), top_filter->height(), top_filter->width());
+  this->eq_filter_->Reshape(top_filter->num(), top_filter->channels(), top_filter->height(), top_filter->width());
   this->eq_filter_->CopyFrom( *top_filter, false, true);
 }
 

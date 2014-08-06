@@ -113,8 +113,8 @@ void FeedbackSolver<Dtype>::Test() {
   vector<Blob<Dtype>*> bottom_vec;
   Dtype loss = 0;
   for (int i = 0; i < param_.test_iter(); ++i) {
+    LOG(INFO)<<"Testing Batch #"<<i<<"...";
     Dtype iter_loss;
-    //ToDo: A question here is that whether or not using feedbackforward() / forward()
     const vector<Blob<Dtype>*>& result =
       //test_net_->Forward(bottom_vec, &iter_loss);
       test_net_->FeedbackForward(bottom_vec, &iter_loss);

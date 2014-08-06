@@ -110,6 +110,7 @@ namespace caffe {
     int M_ = output_num;
     int K_ = channels * kernel_size * kernel_size;
     int N_ = height_out * width_out;
+    SyncedMemory* col_data_ = new SyncedMemory(channels * kernel_size * kernel_size * height_out * width_out * sizeof(Dtype));
     Dtype* col_data = reinterpret_cast<Dtype*>(col_data_->mutable_gpu_data());
     im2col_gpu(input, channels, height,
         width, kernel_size, pad, stride, col_data);

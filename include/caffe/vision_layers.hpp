@@ -132,7 +132,6 @@ class ConvolutionLayer : public Layer<Dtype> {
   int K_;
   int N_;
   Dtype* _r_filter; //The pointer that stores the reversed filter, used in deconvolution
-  SyncedMemory* col_data_;
   SyncedMemory* s_response_;
   SyncedMemory* t_filter_;
   SyncedMemory* deconv_output_;
