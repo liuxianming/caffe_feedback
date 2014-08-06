@@ -84,6 +84,8 @@ namespace caffe {
     }
     //Setting up the eq_filter
     this->eq_filter_ = new Blob<Dtype>(bottom[0]->num(), 1, 1, bottom[0]->channels() * bottom[0]->height() * bottom[0]->width());
+
+    _r_filter = new Dtype[channels_ * kernel_size_ * kernel_size_ * num_output_];
   }
 
 
@@ -257,9 +259,6 @@ namespace caffe {
 						 int output_num, int channels, int kernel_size,
 						 Dtype* t_filter) {
     int _filter_size = kernel_size * kernel_size;
-    SyncedMemory* r_filter = 
-      new SyncedMemory(_filter_size * channels * output_num * sizeof(Dtype));
-    Dtype* _r_filter = reinterpret_cast<Dtype*>(r_filter->mutable_cpu_data());
     //Reverse the filter: mirror in both horizon and vertical
     for(int c = 0; c < channels * output_num; ++c) {
       for(int i = 0; i<_filter_size; ++i) {
@@ -273,7 +272,6 @@ namespace caffe {
 	memcpy(t_filter + t_filter_offset, _r_filter + filter_offset, sizeof(Dtype) * _filter_size);
       } // for each channel
     } // for each output
-    delete r_filter;
   }
 
   template <typename Dtype>
@@ -295,9 +293,7 @@ namespace caffe {
      * N_ = height_out * width_out;
      * 	The number of output for a single channel
      */
-    SyncedMemory* _col_data = 
-      new SyncedMemory(channels * kernel_size * kernel_size * height_out * width_out * sizeof(Dtype));
-    Dtype* col_data = reinterpret_cast<Dtype*>(_col_data->mutable_cpu_data());
+    Dtype* col_data = new Dtype[channels * kernel_size * kernel_size * height_out * width_out];
     //im2col
     im2col_cpu(input, channels, height,
 	       width, kernel_size, pad, stride, col_data);
@@ -305,7 +301,7 @@ namespace caffe {
     caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, M_, N_, K_,
 			  (Dtype)1., filter, col_data,
 			  (Dtype)0., output);
-    delete _col_data;
+    delete[] col_data;
   }
 
   //Function to perform deconvolution:

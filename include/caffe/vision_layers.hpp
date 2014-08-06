@@ -131,6 +131,7 @@ class ConvolutionLayer : public Layer<Dtype> {
   int M_;
   int K_;
   int N_;
+  Dtype* _r_filter; //The pointer that stores the reversed filter, used in deconvolution
 };
 
 /* EltwiseProductLayer
