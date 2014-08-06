@@ -508,6 +508,13 @@ namespace caffe{
 	output_sum = new_output_sum;
       }
     }
+    //clean
+    delete[] output_value;
+    for(int i = 0; i < k; ++i){
+      delete[] k_channels[i];
+      delete[] k_offsets[i];
+    }
+    //return values
     return this->net_output_blobs_;
   }
 
