@@ -61,12 +61,12 @@ int main(int argc, char** argv){
       if(test_flag == false){
           Blob<float>* visualization = caffe_test_net.GetVisualization();
 	  std::ostringstream convert;
-	  //convert << iter <<"_";
-	  //string prefix = convert.str();
-	  //caffe_test_net.DrawVisualization("./", prefix);
-	  convert<< iter <<".txt";
-	  string txtfilename = convert.str();
-	  writeDataToTxt(txtfilename, visualization);
+	  convert << iter <<"_";
+	  string prefix = convert.str();
+	  caffe_test_net.DrawVisualization("./", prefix);
+	  //convert<< iter <<".txt";
+	  //string txtfilename = convert.str();
+	  //writeDataToTxt(txtfilename, visualization);
       }
   }
   LOG(INFO)<<"Done";

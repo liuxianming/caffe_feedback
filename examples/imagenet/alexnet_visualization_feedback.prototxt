@@ -7,7 +7,7 @@ layers {
   image_data_param {
     source: "./filelist.txt"
     mean_file: "../../data/ilsvrc12/imagenet_mean.binaryproto"
-    batch_size: 1
+    batch_size: 7
     crop_size: 227
     mirror: false
     new_height: 256

@@ -22,13 +22,11 @@ namespace caffe{
     explicit FeedbackNet(const string& param_file) : Net<Dtype>(param_file){}
     virtual ~FeedbackNet(){}
 
-    void UpdateEqFilter();
-
     void UpdateEqFilter(int startLayerIdx, 
-			int startChannelIdx, 
-			int startOffset);
+			int* startChannelIdxs, 
+			int* startOffsets);
 
-    void SearchTopKNeurons(int startLayerIdx, int k, int* channel_offset, int* in_channel_offset);
+    void SearchTopKNeurons(int startLayerIdx, int k, vector<int*> channel_offsets, vector<int*> in_channel_offsets);
 
     // By default, the visualization results are straight to the input layer
     // (input_blobs_ as in the father class: Net)
@@ -50,19 +48,20 @@ namespace caffe{
     //Member function
     void InitVisualization();
 
-    const vector<Blob<Dtype>*>& FeedbackForwardPrefilled(Dtype* loss = NULL, int startLayerIdx = -1, int channel = -1, int offset = -1, int max_iterations = 5);
-    const vector<Blob<Dtype>*>& FeedbackForwardPrefilled(string startLayer, int channel = -1, int offset = -1, int max_iterations = 5);
+    const vector<Blob<Dtype>*>& FeedbackForwardPrefilled(Dtype* loss = NULL, int startLayerIdx = -1, int channel = -1, int offset = -1, int max_iterations = 1);
+    const vector<Blob<Dtype>*>& FeedbackForwardPrefilled(string startLayer, int channel = -1, int offset = -1, int max_iterations = 1);
 
   protected:
     //void InitFeedback();
 
     //Generate the top_filter_ for the startLayer of visualization
-    void generateStartTopFilter(int startOffset);
+    void generateStartTopFilter(int* startLayerIdxs, int* startOffsets);
     //Test the eq_filter calculation
-    Dtype test_eq_filter(int _layer_idx, Blob<Dtype>* eq_filter);
+    Dtype test_eq_filter(int _layer_idx, Blob<Dtype>* eq_filter, int* startChannelIdxs, int* startOffsets);
 
   protected:
     //Visualize the response of single neuron, and the return value is the visualization results.
+    Blob<Dtype>* VisualizeSingleNeuron(int startLayerIdx, int* startChannelIdxs, int* startOffsets, bool weigh_flag);
     Blob<Dtype>* VisualizeSingleNeuron(int startLayerIdx, int startChannelIdx, int startOffset, bool weigh_flag);
     Blob<Dtype>* VisualizeSingleRowNeurons(int startLayerIdx, int startChannelIdx, int heightOffset);
     Blob<Dtype>* VisualizeSingleColNeurons(int startLayerIdx, int startChannelIdx, int widthOffset);

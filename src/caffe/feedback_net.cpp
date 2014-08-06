@@ -29,11 +29,27 @@ namespace caffe{
   }
 
   template<typename Dtype>
-  Blob<Dtype>* FeedbackNet<Dtype>::VisualizeSingleNeuron(int startLayerIdx,
+  Blob<Dtype>* FeedbackNet<Dtype>::VisualizeSingleNeuron(int startLayerIdx, 
 							 int startChannelIdx, 
 							 int startOffset, 
+							 bool weight_flag){
+    Blob<Dtype>* input_blob = (this->blobs_[0]).get();
+    int num = input_blob->num(); 
+    int* startChannelIdxs = new int[num];
+    int* startOffsets = new int[num];
+    for(int n = 0; n<num; ++n){
+      startChannelIdxs[n] = startChannelIdx;
+      startOffsets[n] = startOffset;
+    }
+    VisualizeSingleNeuron(startLayerIdx, startChannelIdxs, startOffsets, weight_flag);
+  }
+
+  template<typename Dtype>
+  Blob<Dtype>* FeedbackNet<Dtype>::VisualizeSingleNeuron(int startLayerIdx,
+							 int* startChannelIdxs, 
+							 int* startOffsets, 
 							 bool weight_flag) {
-    UpdateEqFilter(startLayerIdx, startChannelIdx, startOffset);
+    UpdateEqFilter(startLayerIdx, startChannelIdxs, startOffsets);
     //Get the eq_filter_ at the data layer as the output;
     Blob<Dtype>* eq_filter_output  = this->eq_filter_top_.back();
     //Re-organize the eq_filter_output to get this->visualization_
@@ -48,32 +64,12 @@ namespace caffe{
     Dtype* output_weights = new Dtype[_filter_output->num()];
     for(int i = 0; i<_filter_output->num(); ++i) {
       output_weights[i] = *(_filter_output->mutable_cpu_data() 
-			    + _filter_output->offset(i, startChannelIdx) + startOffset);
-      //Test: to output the predicted values and the feedforward values
-      Dtype predict_value = caffe_cpu_dot(input_blob->count() / input_blob->num(),
-					  input_blob->cpu_data() + input_blob->offset(i),
-					  _visualization->cpu_data() 
-					  + _visualization->offset(i));
-      LOG(INFO)<<"The difference between predicted output and the feedforward output is: "
-	       <<predict_value<<" : "<<output_weights[i];
+			    + _filter_output->offset(i, startChannelIdxs[i]) + startOffsets[i]);
     }
     if(weight_flag) {
       _visualization->multiply( output_weights);
     }
     return _visualization;
-  }
-
-  template<typename Dtype>
-  void FeedbackNet<Dtype>::UpdateEqFilter(int startLayerIdx, 
-					  int startChannelIdx, 
-					  int startOffset){
-    this->startLayerIdx_ = startLayerIdx;
-    this->startChannelIdx_ = startChannelIdx;
-    this->startOffset_ = startOffset;
-
-    //Generate top mask
-    generateStartTopFilter(startOffset);
-    UpdateEqFilter();
   }
 
   template<typename Dtype>
@@ -110,10 +106,6 @@ namespace caffe{
 	return;
       }
       this->visualization_ = VisualizeSingleNeuron(startLayerIdx_, startChannelIdx_, this->startOffset_, false);
-      if(test_flag){
-	Dtype error = test_eq_filter(1, this->eq_filter_top_.back());
-	LOG(INFO)<<"[ERROR for neuron #"<<this->startOffset_<<"] = "<<error;
-      }
     }
     else if(heightOffset >= 0 && widthOffset < 0){
       //visualize single row
@@ -147,23 +139,25 @@ namespace caffe{
 
   template<typename Dtype>
   void FeedbackNet<Dtype>::SearchTopKNeurons(int startLayerIdx, int k, 
-					     int* channel_offset, int* in_channel_offset){
+					     vector<int*> channel_offsets, vector<int*> in_channel_offsets){
     Blob<Dtype>* output_blobs = this->top_vecs_[startLayerIdx][0];
     int output_blob_channel_size = output_blobs->width() * output_blobs->height();
-    Dtype* output_blobs_data = output_blobs->mutable_cpu_data();
-    //sort the output for the first image in mini-batch
-    vector<Dtype> sorted_vector(output_blobs_data, output_blobs_data 
-				+ output_blobs->count()/output_blobs->num());
-    std::sort(sorted_vector.begin(), sorted_vector.end());
-    //get the top k
-    typename vector<Dtype>::iterator pos = sorted_vector.end();
-    for(int i = 0; i<k; ++i){
-      pos --; 
-      Dtype _val = *pos;
-      Dtype* p = std::find(output_blobs_data, output_blobs_data + output_blobs->count(), _val);
-      int offset = p - output_blobs_data;
-      channel_offset[i] = offset / output_blob_channel_size;
-      in_channel_offset[i] = offset % output_blob_channel_size;
+    for(int n = 0; n<output_blobs->num(); ++n){
+      Dtype* output_blobs_data = output_blobs->mutable_cpu_data()+output_blobs->offset(n);
+      //sort the output for the first image in mini-batch
+      vector<Dtype> sorted_vector(output_blobs_data, output_blobs_data 
+				  + output_blobs->count()/output_blobs->num());
+      std::sort(sorted_vector.begin(), sorted_vector.end());
+      //get the top k
+      typename vector<Dtype>::iterator pos = sorted_vector.end();
+      for(int i = 0; i<k; ++i){
+	pos --; 
+	Dtype _val = *pos;
+	Dtype* p = std::find(output_blobs_data, output_blobs_data + output_blobs->count(), _val);
+	int offset = p - output_blobs_data;
+	(channel_offsets[i])[n] = offset / output_blob_channel_size;
+	(in_channel_offsets[i])[n] = offset % output_blob_channel_size;
+      }
     }
   }
 
@@ -176,27 +170,33 @@ namespace caffe{
   template<typename Dtype>
   void FeedbackNet<Dtype>::VisualizeTopKNeurons(int startLayerIdx, int k, bool weight_flag){
     this->startLayerIdx_ = startLayerIdx;
-    if(this->blobs_[0]->num() > 1){
-      LOG(ERROR)<<"This function only supports the input batch with size 1";
-      return;
-    }
     Blob<Dtype>* input_blob = (this->blobs_[0]).get();
     Blob<Dtype>* _visualization 
       = new Blob<Dtype>(input_blob->num(), input_blob->channels(),
 			input_blob->height(), input_blob->width());
     memset(_visualization->mutable_cpu_data(), 0, sizeof(Dtype)*_visualization->count());
 
-    int* channel_offset = new int[k];
-    int* in_channel_offset = new int[k];
-    SearchTopKNeurons(startLayerIdx, k, channel_offset, in_channel_offset);
+    //each int* corresponds to a rank, sized in the number of images in each batch
+    vector<int*> channel_offsets;
+    vector<int*> in_channel_offsets;
+    for(int i = 0; i < k; ++i){
+      int* channel_offset = new int[input_blob->num()];
+      channel_offsets.push_back(channel_offset);
+      int* in_channel_offset = new int[input_blob->num()];
+      in_channel_offsets.push_back(in_channel_offset);
+    }
+    
+    SearchTopKNeurons(startLayerIdx, k, channel_offsets, in_channel_offsets);
     for(int i = 0; i<k; ++i){
-      LOG(INFO)<<"Visualize using "<< channel_offset[i] <<" / "<<in_channel_offset[i];
-      this->startChannelIdx_ = channel_offset[i];
-      this->startOffset_ = in_channel_offset[i];
+      int* channel_offset = channel_offsets[i];
+      int* in_channel_offset = in_channel_offsets[i];
+      for(int n = 0; n<input_blob->num(); ++n){
+	LOG(INFO)<<"Visualize image "<< n <<" using "<< channel_offset[n] <<" / "<<in_channel_offset[n];
+      }
       _visualization ->add(*(VisualizeSingleNeuron(startLayerIdx, 
-						   this->startChannelIdx_, 
-						   this->startOffset_, 
-						   weight_flag)));
+							channel_offset, 
+							in_channel_offset,
+							weight_flag)));
     }
     this->visualization_ = _visualization;
   }
@@ -247,10 +247,10 @@ namespace caffe{
         }
     }
     return _visualization;
-}
+  }
 
   template<typename Dtype>
-  void FeedbackNet<Dtype>::generateStartTopFilter(int startOffset){
+  void FeedbackNet<Dtype>::generateStartTopFilter(int* startChannelIdxs,  int* startOffsets){
     //Generate the top_filter_ for the start layer of visualization
     //The output of the top_filter is only one neuron,
     Blob<Dtype>* _top_output_blob = (this->top_vecs_[startLayerIdx_])[0];
@@ -269,14 +269,23 @@ namespace caffe{
     memset(start_top_filter_data, 0, sizeof(Dtype) * start_top_filter_->count());
 
     for (int n = 0; n<start_top_filter_->num(); n++) {
-      *(start_top_filter_data + channel_offset * this->startChannelIdx_ + startOffset) 
+      int startChannelIdx = startChannelIdxs[n];
+      int startOffset = startOffsets[n];
+      *(start_top_filter_data + channel_offset * startChannelIdx + startOffset) 
 	= Dtype(1.);
       start_top_filter_data += start_top_filter_->offset(1, 0);
     }
   }
 
+
   template<typename Dtype>
-  void FeedbackNet<Dtype>::UpdateEqFilter(){
+  void FeedbackNet<Dtype>::UpdateEqFilter(int startLayerIdx, 
+					  int* startChannelIdxs, 
+					  int* startOffsets){
+    this->startLayerIdx_ = startLayerIdx;
+    //Generate top mask
+    generateStartTopFilter(startChannelIdxs, startOffsets);
+    //Begin updating the eq_filter
     //firs build top_filter vector
     this->eq_filter_top_.clear();
     this->eq_filter_top_.push_back(start_top_filter_);
@@ -286,11 +295,10 @@ namespace caffe{
       //LOG(INFO)<<"Using BLOB ["<<blob_name<<"] as input";
       this->layers_[i]->UpdateEqFilter(this->eq_filter_top_.back(), this->bottom_vecs_[i]);
       this->eq_filter_top_.push_back(this->layers_[i]->eq_filter());
-
-      //test
+      //Testing
       bool test_flag = false;
       if (test_flag) {
-	Dtype error = test_eq_filter(i, this->eq_filter_top_.back());
+	Dtype error = test_eq_filter(i, this->eq_filter_top_.back(), startChannelIdxs, startOffsets);
 	LOG(INFO)<<"Error of Layer "<<this->layer_names_[i]<<" is "
 		 <<error<<" : "<<((error < (Dtype) 16.) ? "OK" : "FAIL");
       }
@@ -299,7 +307,6 @@ namespace caffe{
 
   template<typename Dtype>
   void FeedbackNet<Dtype>::DrawVisualization(string dir, string prefix) {
-    std::ostringstream convert;
     //Normalization:
     for(int n = 0; n<this->visualization_->num(); ++n) {
       for (int c = 0; c<this->visualization_->channels(); c++) {
@@ -310,8 +317,10 @@ namespace caffe{
       }
     }
     for (int n = 0; n<visualization_->num(); n++) {
+      std::ostringstream convert;
       convert<<dir<<prefix<<n;
       string filename = convert.str();
+      LOG(INFO)<<"Saving image "<<filename;
       if (visualization_->channels() == 3 || visualization_->channels() == 1){
 	//Visualize as RGB / Grey image
 	filename = filename + ".jpg";
@@ -338,7 +347,8 @@ namespace caffe{
   }
 
   template<typename Dtype>
-  Dtype FeedbackNet<Dtype>::test_eq_filter(int _layer_idx, Blob<Dtype>* eq_filter) {
+  Dtype FeedbackNet<Dtype>::test_eq_filter(int _layer_idx, Blob<Dtype>* eq_filter, 
+					   int* startChannelIdxs, int* startOffsets) {
     Blob<Dtype>* feedforward_output_blob = (this->top_vecs_[this->startLayerIdx_])[0];
 
     Blob<Dtype>* input_blob = (this->bottom_vecs_[_layer_idx])[0];
@@ -351,9 +361,11 @@ namespace caffe{
     Dtype error = (Dtype) 0.;
 
     for(int n = 0; n<input_blob->num(); ++n) {
+      int startChannelIdx = startChannelIdxs[n];
+      int startOffset = startOffsets[n];
       Dtype output_val = *(feedforward_output_blob->mutable_cpu_data()
-			   + feedforward_output_blob->offset(n, this->startChannelIdx_)
-			   + this->startOffset_);
+			   + feedforward_output_blob->offset(n, startChannelIdx)
+			   + startOffset);
       Dtype* input_data = input_blob->mutable_cpu_data() + input_blob->offset(n);
       Dtype* eq_filter_data = eq_filter->mutable_cpu_data() + eq_filter->offset(n);
       int len = input_blob->channels() * input_blob->height() * input_blob->width();
@@ -374,9 +386,6 @@ namespace caffe{
   template<typename Dtype>
   const vector<Blob<Dtype>*>& FeedbackNet<Dtype>::FeedbackForwardPrefilled(Dtype* loss, int startLayerIdx, int channel, int offset, int max_iterations){
     this->forwardCompleteFlag = true;
-    int k = 5;
-    int* k_channel = new int[k];
-    int* k_offset = new int[k];
     //reset layers
     for (int i = 0; i < this->layers_.size(); ++i) {
       this->layers_[i]->Reset();
@@ -393,63 +402,89 @@ namespace caffe{
     }
 
     if(startLayerIdx == -1){
+      //by default, don't use the last layer as feedback target
+      //Since in most cases, the last layer is either prob, accuracy, or error layers
       startLayerIdx = this->layers_.size()-1;
     }
-    SearchTopKNeurons(startLayerIdx, 5, k_channel, k_offset);
+
+    int k = 1;
+    Blob<Dtype>* input_blob = (this->blobs_[0]).get();
+    vector<int*> k_channels;
+    vector<int*> k_offsets;
+    for(int i = 0; i < k; ++i){
+      int* channel_offset = new int[input_blob->num()];
+      k_channels.push_back(channel_offset);
+      int* in_channel_offset = new int[input_blob->num()];
+      k_offsets.push_back(in_channel_offset);
+    }
+    
+    SearchTopKNeurons(startLayerIdx, k, k_channels, k_offsets);
+    int* channels = new int[input_blob->num()];
+    int* offsets = new int[input_blob->num()];
     if(channel == -1 && offset == -1) {
       //get the largest output category
-      channel = k_channel[0];
-      offset = k_offset[0];
+      channels = k_channels[0];
+      offsets = k_offsets[0];
+    }    
+    else{
+      //Using the selected neuron
+      LOG(INFO)<<channel << ":"<<offset<<" * "<<input_blob->num();
+      for(int n = 0; n<input_blob->num(); ++n){
+	channels[n] = channel;
+	offsets[n] = offset;
+      }
     }
-    LOG(INFO)<<"Using the neuron at "<<channel << " / "<<offset<<" As target";
-    //pick the value of output
     Dtype output_sum = (Dtype) 0.;
     Blob<Dtype>* top_output_blob = (this->top_vecs_[startLayerIdx])[0];
     Dtype* output_value = new Dtype[top_output_blob->num()];
+
+    /*
+     * For debug: output the ranking information
+     * including chosen neurons, 
+     * top k neurons in each iterations, etc.
+     */
     LOG(INFO)<<"Initial Output Values:";
     for(int n = 0; n<top_output_blob->num(); ++n){
       output_value[n] = *(top_output_blob->cpu_data() 
-			  + top_output_blob->offset(n, channel) + offset);
+			  + top_output_blob->offset(n, channels[n]) + offsets[n]);
       output_sum += output_value[n];
-      LOG(INFO)<<output_value[n];
-      std::ostringstream convert;
+      LOG(INFO)<<"Using "<<channels[n] << " / "<<offsets[n]
+	       <<" as target neurons for image "<<n
+	       <<" : "<<output_value[n] << "\n";
+      LOG(INFO)<<"Top "<<k<<" neurons for image "<<n<<":";      
       for(int i = 0; i<k; i++){
           Dtype value = *(top_output_blob->cpu_data()
-              + top_output_blob->offset(n, k_channel[i]) + k_offset[i]);
-          convert <<"[Channel: " <<k_channel[i] <<":"<< value << "] ";
+			  + top_output_blob->offset(n, (k_channels[i])[n]) 
+			  + (k_offsets[i])[n]);
+          LOG(INFO)<<"[Channel: " <<(k_channels[i])[n] <<":"<< value << "] ";
       }
-      string values = convert.str();
-      LOG(INFO)<<values;
     }
+
     int iteration  = 0;
     while(true){
-      //UpdateEqFilter
-      UpdateEqFilter(startLayerIdx, channel, offset);
+      if (loss != NULL) {
+	*loss = Dtype(0.);
+      }
+      UpdateEqFilter(startLayerIdx, channels, offsets);
       //Forward - don't deal with data layer
       for (int i = 1; i < this->layers_.size(); ++i) {
 	Dtype layer_loss 
 	  = this->layers_[i]->Forward(this->bottom_vecs_[i], &(this->top_vecs_[i]));
+	if (loss != NULL) {
+	  *loss += layer_loss;
+	}
       }
-      SearchTopKNeurons(startLayerIdx, k, k_channel, k_offset);
       LOG(INFO)<<"Feedback Iteration"<<iteration;
       Dtype new_output_sum = (Dtype) 0.;
       for(int n = 0; n<top_output_blob->num(); ++n){
 	output_value[n] = *(top_output_blob->cpu_data() 
-			    + top_output_blob->offset(n, channel) + offset);
+			    + top_output_blob->offset(n, channels[n]) + offsets[n]);
 	new_output_sum += output_value[n];
 	LOG(INFO)<<output_value[n];
-	std::ostringstream convert;
-	for(int i = 0; i<k; i++){
-	    Dtype value = *(top_output_blob->cpu_data()
-	        + top_output_blob->offset(n, k_channel[i]) + k_offset[i]);
-	    convert << k_channel[i] <<":"<< value << " ";
-	}
-	string values = convert.str();
-	LOG(INFO)<<values;
       }
       iteration ++;
       Dtype converge = (output_sum - new_output_sum) * (output_sum - new_output_sum);
-      if(converge <= 1 || iteration > max_iterations){
+      if(converge <= 1 || iteration >= max_iterations){
 	//Doesnot allow too many iterations
 	LOG(INFO)<<"Converge in " <<iteration << " iterations!";
 	break;
