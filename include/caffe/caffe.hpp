@@ -12,6 +12,7 @@
 #include "caffe/net.hpp"
 #include "caffe/feedback_net.hpp"
 #include "caffe/solver.hpp"
+#include "caffe/feedback_solver.hpp"
 #include "caffe/util/io.hpp"
 #include "caffe/vision_layers.hpp"
 
