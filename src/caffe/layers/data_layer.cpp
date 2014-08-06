@@ -269,8 +269,6 @@ Dtype DataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     caffe_copy(prefetch_label_->count(), prefetch_label_->cpu_data(),
                (*top)[1]->mutable_cpu_data());
   }
-  //For debug
-  //LOG(INFO)<<"[Size of Input]: "<< top->size()<<" : " <<(*top)[0]->num() << " : "<< (*top)[0]->channels();
   // Start a new prefetch thread
   CreatePrefetchThread();
   return Dtype(0.);

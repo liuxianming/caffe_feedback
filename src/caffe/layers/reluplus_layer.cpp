@@ -20,9 +20,11 @@ namespace caffe {
     CHECK_EQ(bottom.size(), 1) << "ReLUPlus Layer takes a single blob as input.";
     CHECK_EQ(top->size(), 1) << "ReLUPlus Layer takes a single blob as output.";
     //initialize activation
+    /*
     LOG(INFO)<<"setting up ReLUPlus Layer";
     LOG(INFO)<<"size of relu_plus: "<<bottom[0]->num()<< " "<< bottom[0]->channels() 
 	     <<" "<<bottom[0]->height()<<" "<<bottom[0]->width();
+    */    
     this->activation_ = new Blob<Dtype>(bottom[0]->num(), bottom[0]->channels(), 
 					bottom[0]->height(), bottom[0]->width());
     //this->activation_->CopyFrom(*(bottom[0]), false, true);
@@ -31,6 +33,8 @@ namespace caffe {
       (*top)[0]->Reshape(bottom[0]->num(), bottom[0]->channels(),
 			 bottom[0]->height(), bottom[0]->width());
     }
+    //Setting up the eq_filter
+    this->eq_filter_ = new Blob<Dtype>(bottom[0]->num(), 1, 1, bottom[0]->channels() * bottom[0]->height() * bottom[0]->width());
   }
 
   template<typename Dtype>
@@ -73,7 +77,7 @@ namespace caffe {
       Dtype* bottom_diff = (*bottom)[0]->mutable_cpu_diff();
       const int count = (*bottom)[0]->count();
       for (int i = 0; i < count; ++i) {
-	bottom_diff[i] = top_diff[i] * ( (bottom_data[i] * activation_data[i]) > 0);
+	bottom_diff[i] = top_diff[i] * (bottom_data[i] > 0) * activation_data[i];
       }
     }
   }
@@ -87,14 +91,13 @@ namespace caffe {
 
   template <typename Dtype>
   void ReLUPlusLayer<Dtype>::UpdateEqFilter(const Blob<Dtype>* top_filter, 
-					    const vector<Blob<Dtype>*>& input)
-  {
+					    const vector<Blob<Dtype>*>& input) {
     //Initialization:
     //The size of eq_filter_ is the same as top_filter
-    this->eq_filter_ = new Blob<Dtype>(top_filter->num(),
-				       top_filter->channels(),
-				       top_filter->height(),
-				       top_filter->width());
+    this->eq_filter_->Reshape(top_filter->num(),
+			      top_filter->channels(),
+			      top_filter->height(),
+			      top_filter->width());
 
     this->eq_filter_->CopyFrom(*top_filter);
 

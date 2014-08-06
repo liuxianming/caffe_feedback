@@ -18,6 +18,8 @@ void NeuronLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
     (*top)[0]->Reshape(bottom[0]->num(), bottom[0]->channels(),
         bottom[0]->height(), bottom[0]->width());
   }
+  //Setting up the eq_filter
+  this->eq_filter_ = new Blob<Dtype>(bottom[0]->num(), 1, 1, bottom[0]->channels() * bottom[0]->height() * bottom[0]->width());
 }
 
 INSTANTIATE_CLASS(NeuronLayer);

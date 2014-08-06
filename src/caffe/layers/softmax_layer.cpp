@@ -85,7 +85,6 @@ void SoftmaxLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 template<typename Dtype>
 void SoftmaxLayer<Dtype>::UpdateEqFilter(const Blob<Dtype>* top_filter,
     const vector<Blob<Dtype>*>& input) {
-  LOG(INFO)<<"Calculating Feedback Weights for "<<this->layer_param_.name();
   // The most simple implementation: pass the top_filter through
   this->eq_filter_ = new Blob<Dtype>(top_filter->num(), top_filter->channels(), top_filter->height(), top_filter->width());
   this->eq_filter_->CopyFrom( *top_filter, false, true);

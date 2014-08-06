@@ -97,7 +97,7 @@ namespace caffe{
     int output_layer_width = (this->top_vecs_[startLayerIdx_])[0]->width();
     int output_layer_height = (this->top_vecs_[startLayerIdx_])[0]->height();
     int output_layer_channel = (this->top_vecs_[startLayerIdx_])[0]->channels();
-    LOG(INFO)<<output_layer_width<<":"<<output_layer_height<<":"<<output_layer_channel;
+    //LOG(INFO)<<output_layer_width<<":"<<output_layer_height<<":"<<output_layer_channel;
     if(heightOffset >= 0 && widthOffset >= 0) {
 
       this->startOffset_ = widthOffset + heightOffset * output_layer_width;
@@ -415,7 +415,8 @@ namespace caffe{
     if(startLayerIdx == -1){
       //by default, don't use the last layer as feedback target
       //Since in most cases, the last layer is either prob, accuracy, or error layers
-      startLayerIdx = this->layers_.size()-1;
+      //Note: layers_.size() - 1 is the last layer
+      startLayerIdx = this->layers_.size()-2;
     }
 
     int k = 1;
@@ -439,7 +440,7 @@ namespace caffe{
     }    
     else{
       //Using the selected neuron
-      LOG(INFO)<<channel << ":"<<offset<<" * "<<input_blob->num();
+      //LOG(INFO)<<channel << ":"<<offset<<" * "<<input_blob->num();
       for(int n = 0; n<input_blob->num(); ++n){
 	channels[n] = channel;
 	offsets[n] = offset;
@@ -454,6 +455,8 @@ namespace caffe{
      * including chosen neurons, 
      * top k neurons in each iterations, etc.
      */
+
+    /*
     LOG(INFO)<<"Initial Output Values:";
     for(int n = 0; n<top_output_blob->num(); ++n){
       output_value[n] = *(top_output_blob->cpu_data() 
@@ -470,6 +473,7 @@ namespace caffe{
           LOG(INFO)<<"[Channel: " <<(k_channels[i])[n] <<":"<< value << "] ";
       }
     }
+    */
 
     int iteration  = 0;
     while(true){
@@ -485,19 +489,19 @@ namespace caffe{
 	  *loss += layer_loss;
 	}
       }
-      LOG(INFO)<<"Feedback Iteration"<<iteration;
+      //LOG(INFO)<<"Feedback Iteration"<<iteration;
       Dtype new_output_sum = (Dtype) 0.;
       for(int n = 0; n<top_output_blob->num(); ++n){
 	output_value[n] = *(top_output_blob->cpu_data() 
 			    + top_output_blob->offset(n, channels[n]) + offsets[n]);
 	new_output_sum += output_value[n];
-	LOG(INFO)<<output_value[n];
+	//LOG(INFO)<<output_value[n];
       }
       iteration ++;
       Dtype converge = (output_sum - new_output_sum) * (output_sum - new_output_sum);
       if(converge <= 1 || iteration >= max_iterations){
 	//Doesnot allow too many iterations
-	LOG(INFO)<<"Converge in " <<iteration << " iterations!";
+	//LOG(INFO)<<"Converge in " <<iteration << " iterations!";
 	break;
       }
       else{

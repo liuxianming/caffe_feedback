@@ -44,10 +44,10 @@ namespace caffe {
   {
     //Initialization:
     //The size of eq_filter_ is the same as top_filter
-    this->eq_filter_ = new Blob<Dtype>(top_filter->num(),
-                top_filter->channels(),
-                top_filter->height(),
-                top_filter->width());
+    this->eq_filter_->Reshape(top_filter->num(),
+			      top_filter->channels(),
+			      top_filter->height(),
+			      top_filter->width());
 
     this->eq_filter_->CopyFrom(*top_filter);
 

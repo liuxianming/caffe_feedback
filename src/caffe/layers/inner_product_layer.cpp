@@ -58,6 +58,8 @@ namespace caffe {
             bias_multiplier_data[i] = 1.;
         }
     }
+    //Setting up the eq_filter
+    this->eq_filter_ = new Blob<Dtype>(bottom[0]->num(), 1, 1, bottom[0]->channels() * bottom[0]->height() * bottom[0]->width());
   }
 
   template <typename Dtype>
@@ -107,7 +109,7 @@ namespace caffe {
     int outputsize = top_filter->width();
     int inputsize = input[0]->count() / input[0]->num();
 
-    this->eq_filter_ = new Blob<Dtype>(input[0]->num(), 1, top_output_num, inputsize);
+    this->eq_filter_->Reshape(input[0]->num(), 1, top_output_num, inputsize);
 
     const Dtype* top_filter_data = (GPUMODE ? top_filter->gpu_data() : top_filter->cpu_data());
 

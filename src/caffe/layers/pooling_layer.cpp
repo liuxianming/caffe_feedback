@@ -47,7 +47,8 @@ namespace caffe {
 							  this->pooled_height_, this->pooled_width_));
     memset(pooling_mask->mutable_cpu_data(), 0, sizeof(Dtype) * pooling_mask->count());
     this->pooling_mask_ = pooling_mask;
-    //this->blobs_.push_back(pooling_mask);
+    //Setting up the eq_filter
+    this->eq_filter_ = new Blob<Dtype>(bottom[0]->num(), 1, 1, bottom[0]->channels() * bottom[0]->height() * bottom[0]->width());
   }
 
   // TODO(Yangqing): Is there a faster way to do pooling in the channel-first
@@ -232,7 +233,7 @@ namespace caffe {
       int top_output_num = top_filter->height();
       int top_output_channel = top_filter->channels();
 
-      this->eq_filter_ = new Blob<Dtype>(M_, top_output_channel, top_output_num, K_);
+      this->eq_filter_->Reshape(M_, top_output_channel, top_output_num, K_);
       const Dtype* top_filter_data = top_filter->cpu_data();
       Dtype* eq_filter_data_ = this->eq_filter_->mutable_cpu_data();
       //Calculation of eq_filter_

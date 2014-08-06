@@ -110,27 +110,16 @@ namespace caffe {
     int M_ = output_num;
     int K_ = channels * kernel_size * kernel_size;
     int N_ = height_out * width_out;
-    /*
-     * For information
-     * M_ = num_output_ / group_
-     *  total number of output for a group
-     * K_ = channels_ * kernel_size_ * kernel_size_ / group_;
-     *  The size of one filter
-     * N_ = height_out * width_out;
-     *  The number of output for a single channel
-     */
-    shared_ptr<SyncedMemory> col_data_;
-    col_data_.reset(new SyncedMemory(channels * kernel_size * kernel_size * height_out * width_out * sizeof(Dtype)));
+ 
+    SyncedMemory* col_data_ = new SyncedMemory(channels * kernel_size * kernel_size * height_out * width_out * sizeof(Dtype));
     Dtype* col_data = reinterpret_cast<Dtype*>(col_data_->mutable_gpu_data());
-    //im2col
     im2col_gpu(input, channels, height,
         width, kernel_size, pad, stride, col_data);
     //Performing inner product
-    ///*
     caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, M_, N_, K_,
         (Dtype)1., filter, col_data,
         (Dtype)0., output);
-    //delete [] col_data;
+    delete col_data_;
   }
 
   INSTANTIATE_CLASS(ConvolutionLayer);

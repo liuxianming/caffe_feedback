@@ -1,9 +1,9 @@
-name: "AlexNet_Feedback"
+name: "AlexFeedbackNet"
 layers {
   name: "data"
   type: DATA
   data_param {
-    source: "ilsvrc12_train_leveldb"
+    source: "imagenet_train_leveldb"
     mean_file: "../../data/ilsvrc12/imagenet_mean.binaryproto"
     batch_size: 256
     crop_size: 227
@@ -15,12 +15,30 @@ layers {
 layers {
   name: "conv1"
   type: CONVOLUTION
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
   convolution_param {
     num_output: 96
     kernel_size: 11
     stride: 4
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
   }
   bottom: "data"
+  top: "conv1"
+}
+layers {
+  name: "relu1"
+  type: RELUPLUS
+  bottom: "conv1"
   top: "conv1"
 }
 layers {
@@ -46,21 +64,33 @@ layers {
   top: "pool1"
 }
 layers {
-  name: "relu1"
-  type: RELUPLUS
-  bottom: "pool1"
-  top: "relu1"
-}
-layers {
   name: "conv2"
   type: CONVOLUTION
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
   convolution_param {
     num_output: 256
     pad: 2
     kernel_size: 5
     group: 2
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0.1
+    }
   }
-  bottom: "relu1"
+  bottom: "pool1"
+  top: "conv2"
+}
+layers {
+  name: "relu2"
+  type: RELUPLUS
+  bottom: "conv2"
   top: "conv2"
 }
 layers {
@@ -86,56 +116,92 @@ layers {
   top: "pool2"
 }
 layers {
-  name: "relu2"
-  type: RELUPLUS
-  bottom: "pool2"
-  top: "relu2"
-}
-layers {
   name: "conv3"
   type: CONVOLUTION
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
   convolution_param {
     num_output: 384
     pad: 1
     kernel_size: 3
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
   }
-  bottom: "relu2"
+  bottom: "pool2"
   top: "conv3"
 }
 layers {
   name: "relu3"
   type: RELUPLUS
   bottom: "conv3"
-  top: "relu3"
+  top: "conv3"
 }
 layers {
   name: "conv4"
   type: CONVOLUTION
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
   convolution_param {
     num_output: 384
     pad: 1
     kernel_size: 3
     group: 2
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0.1
+    }
   }
-  bottom: "relu3"
+  bottom: "conv3"
   top: "conv4"
 }
 layers {
   name: "relu4"
   type: RELUPLUS
   bottom: "conv4"
-  top: "relu4"
+  top: "conv4"
 }
 layers {
   name: "conv5"
   type: CONVOLUTION
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
   convolution_param {
     num_output: 256
     pad: 1
     kernel_size: 3
     group: 2
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0.1
+    }
   }
-  bottom: "relu4"
+  bottom: "conv4"
+  top: "conv5"
+}
+layers {
+  name: "relu5"
+  type: RELUPLUS
+  bottom: "conv5"
   top: "conv5"
 }
 layers {
@@ -150,25 +216,31 @@ layers {
   top: "pool5"
 }
 layers {
-  name: "relu5"
-  type: RELUPLUS
-  bottom: "pool5"
-  top: "relu5"
-}
-layers {
   name: "fc6"
   type: INNER_PRODUCT
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
   inner_product_param {
     num_output: 4096
+    weight_filler {
+      type: "gaussian"
+      std: 0.005
+    }
+    bias_filler {
+      type: "constant"
+      value: 0.1
+    }
   }
-  bottom: "relu5"
+  bottom: "pool5"
   top: "fc6"
 }
 layers {
   name: "relu6"
   type: RELUPLUS
   bottom: "fc6"
-  top: "relu6"
+  top: "fc6"
 }
 layers {
   name: "drop6"
@@ -176,23 +248,35 @@ layers {
   dropout_param {
     dropout_ratio: 0.5
   }
-  bottom: "relu6"
-  top: "drop6"
+  bottom: "fc6"
+  top: "fc6"
 }
 layers {
   name: "fc7"
   type: INNER_PRODUCT
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
   inner_product_param {
     num_output: 4096
+    weight_filler {
+      type: "gaussian"
+      std: 0.005
+    }
+    bias_filler {
+      type: "constant"
+      value: 0.1
+    }
   }
-  bottom: "drop6"
+  bottom: "fc6"
   top: "fc7"
 }
 layers {
   name: "relu7"
   type: RELUPLUS
   bottom: "fc7"
-  top: "relu7"
+  top: "fc7"
 }
 layers {
   name: "drop7"
@@ -200,16 +284,28 @@ layers {
   dropout_param {
     dropout_ratio: 0.5
   }
-  bottom: "relu7"
-  top: "drop7"
+  bottom: "fc7"
+  top: "fc7"
 }
 layers {
   name: "fc8"
   type: INNER_PRODUCT
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
   inner_product_param {
     num_output: 1000
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
   }
-  bottom: "drop7"
+  bottom: "fc7"
   top: "fc8"
 }
 layers {
