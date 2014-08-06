@@ -122,7 +122,7 @@ namespace caffe {
         width, kernel_size, pad, stride, col_data);
     //Performing inner product
     caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, M_, N_, K_,
-        (Dtype)1., filter, col_data,
+        (Dtype)1., filter, (Dtype*) col_data,
         (Dtype)0., output);
     //delete col_data_;
     CUDA_CHECK(cudaFree(col_data));

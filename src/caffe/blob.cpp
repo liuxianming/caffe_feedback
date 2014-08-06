@@ -22,6 +22,12 @@ namespace caffe {
     height_ = height;
     width_ = width;
     count_ = num_ * channels_ * height_ * width_;
+    if (data_.get()){
+      delete data_.get();
+    }
+    if (diff_.get()){
+      delete diff_.get();
+    }
     if (count_) {
       data_.reset(new SyncedMemory(count_ * sizeof(Dtype)));
       diff_.reset(new SyncedMemory(count_ * sizeof(Dtype)));
