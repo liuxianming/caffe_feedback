@@ -110,11 +110,6 @@ namespace caffe {
     int M_ = output_num;
     int K_ = channels * kernel_size * kernel_size;
     int N_ = height_out * width_out;
- 
-    size_t size_ = channels * kernel_size * kernel_size * height_out * width_out * sizeof(Dtype);
-    //void* col_data = NULL; 
-    //CUDA_CHECK(cudaMalloc(&col_data, size_));
-    SyncedMemory* col_data_ = new SyncedMemory(size_);
     Dtype* col_data = reinterpret_cast<Dtype*>(col_data_->mutable_gpu_data());
     im2col_gpu(input, channels, height,
         width, kernel_size, pad, stride, col_data);
