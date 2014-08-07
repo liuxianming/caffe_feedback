@@ -362,8 +362,8 @@ class PoolingLayer : public Layer<Dtype> {
                   const vector<Blob<Dtype>*>& input);
 
   //Get the max_pooling mask for each input image
-  inline shared_ptr<Blob<Dtype> >  GetMask(){
-	  return this->pooling_mask_;
+  inline Blob<Dtype>*  GetMask(){
+	  return &pooling_mask_;
   }
 
  protected:
@@ -385,7 +385,7 @@ class PoolingLayer : public Layer<Dtype> {
   int pooled_height_;
   int pooled_width_;
   Blob<Dtype> rand_idx_;
-  shared_ptr<Blob<Dtype> > pooling_mask_;
+  Blob<Dtype> pooling_mask_;
 };
 
 /* SoftmaxLayer

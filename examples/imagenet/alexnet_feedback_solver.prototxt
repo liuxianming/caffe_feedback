@@ -5,11 +5,11 @@ test_interval: 1000
 base_lr: 0.01
 lr_policy: "step"
 gamma: 0.1
-stepsize: 10000
+stepsize: 4000
 display: 100
-max_iter: 30000
+max_iter: 12000
 momentum: 0.9
 weight_decay: 0.0005
-snapshot: 5000
+snapshot: 2000
 snapshot_prefix: "feedback_alexnet"
 device_id: 0

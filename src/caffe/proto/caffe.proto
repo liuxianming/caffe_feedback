@@ -67,7 +67,7 @@ message VisualizerParameter {
     GPU = 1;
   }
   optional VisualizerMode visualizer_mode = 5 [default = GPU]; // The mode used for visualization
-  optional string target_layer = 6 [default = "fc8"] // The layer name need to visualize
+  optional string target_layer = 6 [default = "fc8"]; // The layer name need to visualize
   optional int32 k = 7 [default = 1]; // The number of neurons to visualize
   optional int32 device_id = 8 [default = 0];
 }

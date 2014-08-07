@@ -42,11 +42,8 @@ namespace caffe {
       rand_idx_.Reshape(bottom[0]->num(), channels_, pooled_height_,
 			pooled_width_);
     }
-
-    shared_ptr<Blob<Dtype> > pooling_mask(new Blob<Dtype>(bottom[0]->num(), this->channels_,
-							  this->pooled_height_, this->pooled_width_));
-    memset(pooling_mask->mutable_cpu_data(), 0, sizeof(Dtype) * pooling_mask->count());
-    this->pooling_mask_ = pooling_mask;
+    this->pooling_mask_.Reshape(bottom[0]->num(), this->channels_,
+				this->pooled_height_, this->pooled_width_);
     //Setting up the eq_filter
     this->eq_filter_ = new Blob<Dtype>(bottom[0]->num(), 1, 1, bottom[0]->channels() * bottom[0]->height() * bottom[0]->width());
   }
@@ -61,6 +58,8 @@ namespace caffe {
     // Different pooling methods. We explicitly do the switch outside the for
     // loop to save time, although this results in more codes.
     int top_count = (*top)[0]->count();
+    // first, clear pooling_mask
+    memset(pooling_mask_.mutable_cpu_data(), 0, pooling_mask_.count() * sizeof(Dtype));
     switch (this->layer_param_.pooling_param().pool()) {
     case PoolingParameter_PoolMethod_MAX:
       // Initialize
@@ -70,8 +69,8 @@ namespace caffe {
       // The main loop
       for (int n = 0; n < bottom[0]->num(); ++n) {
 	for (int c = 0; c < channels_; ++c) {
-	  Dtype* mask_data = pooling_mask_->mutable_cpu_data() 
-	    + pooling_mask_->offset(n,c);
+	  Dtype* mask_data = pooling_mask_.mutable_cpu_data() 
+	    + pooling_mask_.offset(n,c);
 	  for (int ph = 0; ph < pooled_height_; ++ph) {
 	    for (int pw = 0; pw < pooled_width_; ++pw) {
 	      int hstart = ph * stride_;
@@ -241,9 +240,9 @@ namespace caffe {
       memset(eq_filter_data_, 0, sizeof(Dtype) * this->eq_filter_->count());
 
       for (int n = 0; n<input[0]->num(); n++){
-	for (int c = 0; c< pooling_mask_->channels(); c++){
-	  const Dtype* mask_data = pooling_mask_->cpu_data() + pooling_mask_->offset(n,c);
-	  for (int offset = 0; offset < pooling_mask_->height() * pooling_mask_->width(); ++offset) {
+	for (int c = 0; c< pooling_mask_.channels(); c++){
+	  const Dtype* mask_data = pooling_mask_.cpu_data() + pooling_mask_.offset(n,c);
+	  for (int offset = 0; offset < pooling_mask_.height() * pooling_mask_.width(); ++offset) {
 	    int mask_offset = static_cast<int>(*(mask_data + offset));
 	    for(int top_c = 0; top_c < top_filter->channels(); top_c++){
 	      for(int top_o = 0; top_o< top_output_num; top_o++) {
@@ -253,7 +252,7 @@ namespace caffe {
 		//a neuron could be activated multiple times in max pooling
 		//because the MAX_POOLING is overlapped
 		*(eq_filter_data_ + this->eq_filter_->offset(n, top_c, top_o) +
-		  c * this->height_ * this->width_ +mask_offset) += _f_value;
+		  c * this->height_ * this->width_ + mask_offset) += _f_value;
 	      }
 	    }
 	  }

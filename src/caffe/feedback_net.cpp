@@ -281,8 +281,8 @@ namespace caffe{
   template<typename Dtype>
   void FeedbackNet<Dtype>::UpdateEqFilter(int startLayerIdx, 
 					  int* startChannelIdxs, 
-					  int* startOffsets
-            int endLayerIdx){
+					  int* startOffsets,
+					  int endLayerIdx){
     this->startLayerIdx_ = startLayerIdx;
     //Generate top mask
     generateStartTopFilter(startChannelIdxs, startOffsets);
