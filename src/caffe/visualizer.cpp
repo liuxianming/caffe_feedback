@@ -52,8 +52,17 @@ namespace caffe {
     //Output visualization task summerization
     LOG(INFO)<<"**************************************************";
     LOG(INFO)<<"Job summerization:";
-    LOG(INFO)<<"Visualize from Layer ["<<param_.target_layer()<<"] "
-	     <<"Using Top "<<param_.k()<<" neuron(s)";
+    LOG(INFO)<<"Visualize from Layer ["<<param_.target_layer()<<"] ";
+    if (param_.visualization_type() == VisualizerParameter_VisualizationType_TOP){
+      //visualize using top k neurons
+      LOG(INFO)<<"Using Top "<<param_.k()<<" neuron(s)";
+    }
+    else if (param_.visualization_type() == VisualizerParameter_VisualizationType_SELECT){
+      LOG(INFO)<<"Using given neurons: "
+	       <<" Channel = "<<param_.channel_idx()
+	       <<" Row = "<<param_.row_idx()
+	       <<" Col = "<<param_.col_idx();
+    }
     LOG(INFO)<<"Max Iteration = "<<param_.max_iter();
     LOG(INFO)<<"Save Path: "<<param_.store_dir();
     LOG(INFO)<<"**************************************************";
@@ -71,9 +80,21 @@ namespace caffe {
     for(iter_ = 0; iter_ < param_.max_iter(); ++iter_){
       LOG(INFO)<<"Processing Batch "<<iter_;
       //Perform forward()
-      const vector<Blob<Dtype>*>& result = net_->FeedbackForwardPrefilled();
-      //Start visualization
-      net_->VisualizeTopKNeurons(param_.target_layer(), param_.k(), false);
+      if(param_.visualization_type() == VisualizerParameter_VisualizationType_TOP){
+        if(param_.k() > 1) {
+          const vector<Blob<Dtype>*>& result = net_->ForwardPrefilled();
+        }
+        else if (param_.k() == 1) {
+          const vector<Blob<Dtype>*>& result = net_->FeedbackForwardPrefilled();
+        }
+        //Start visualization
+        net_->VisualizeTopKNeurons(param_.target_layer(), param_.k(), false);
+      }
+      else if (param_.visualization_type() == VisualizerParameter_VisualizationType_SELECT) {
+        //const vector<Blob<float>*>& result = cnet_.FeedbackForwardPrefilled();
+        const vector<Blob<Dtype>*>& result = net_->ForwardPrefilled();
+        net_->Visualize(param_.target_layer(), param_.channel_idx(), param_.row_idx(), param_.col_idx(), false);
+      }
       //Save visualization to image files
       std::ostringstream convert;
       convert << iter_ <<"_";

@@ -42,7 +42,7 @@ namespace caffe{
 
     void VisualizeTopKNeurons(int startLayerIdx, int k = 1, bool weight_flag = true);
     void VisualizeTopKNeurons(string startLayer, int k = 1, bool weight_flag = true);
-    inline Blob<Dtype>* GetVisualization() {return visualization_;}
+    inline vector<Blob<Dtype>*> GetVisualization() {return visualization_;}
 
     //draw visualization: draw visualization_ to files, stored in dir
     void DrawVisualization(string dir, string prefix = "");
@@ -80,7 +80,8 @@ namespace caffe{
     //Stores the visualization results
     //num: input images of minibatch;
     //channels, width, height: size of image (channel by default is rgb)
-    Blob<Dtype>* visualization_;
+    //vector: the number or neurons to visualize
+    vector<Blob<Dtype>*> visualization_;
     
     //The vector stores the ptr list of eq_filter for each feedback_layer in fLayers_
     //If the end layer idx of visualization is k,

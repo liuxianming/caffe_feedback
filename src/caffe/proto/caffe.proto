@@ -66,10 +66,21 @@ message VisualizerParameter {
     CPU = 0;
     GPU = 1;
   }
+  enum VisualizationType {
+    TOP = 0;
+    SELECT = 1;
+  }
   optional VisualizerMode visualizer_mode = 5 [default = GPU]; // The mode used for visualization
-  optional string target_layer = 6 [default = "fc8"]; // The layer name need to visualize
-  optional int32 k = 7 [default = 1]; // The number of neurons to visualize
-  optional int32 device_id = 8 [default = 0];
+  optional VisualizationType visualization_type = 6 [default = TOP]; 
+  // The type of visualization: choose Top or select some neurons
+  optional string target_layer = 7 [default = "fc8"]; // The layer name need to visualize
+  optional int32 k = 8 [default = 1]; // The top number of neurons to visualize
+  //Following parameters are used if the visualization_type == 1 (SELECT)
+  optional int32 channel_idx = 9;
+  optional int32 row_idx = 10 [default = -1];
+  optional int32 col_idx = 11 [default = -1];
+  //The device id (GPU ID) will be used
+  optional int32 device_id = 12 [default = 0];
 }
 
 message SolverParameter {

@@ -105,15 +105,15 @@ namespace caffe{
 	LOG(ERROR)<<"Wrong output neuron!";
 	return;
       }
-      this->visualization_ = VisualizeSingleNeuron(startLayerIdx_, startChannelIdx_, this->startOffset_, false);
+      this->visualization_.push_back(VisualizeSingleNeuron(startLayerIdx_, startChannelIdx_, this->startOffset_, false));
     }
     else if(heightOffset >= 0 && widthOffset < 0){
       //visualize single row
-      this->visualization_ = VisualizeSingleRowNeurons(startLayerIdx, startChannelIdx, heightOffset);
+      this->visualization_.push_back(VisualizeSingleRowNeurons(startLayerIdx, startChannelIdx, heightOffset));
     }
     else if(heightOffset < 0 && widthOffset >= 0){
       //visualize single col
-      this->visualization_ = VisualizeSingleColNeurons(startLayerIdx, startChannelIdx, widthOffset);
+      this->visualization_.push_back(VisualizeSingleColNeurons(startLayerIdx, startChannelIdx, widthOffset));
     }
     else {
       Blob<Dtype>* input_blob = (this->blobs_[0]).get();
@@ -124,7 +124,7 @@ namespace caffe{
       for(int h=0; h<output_layer_height; ++h) {
 	_visualization->add( *(VisualizeSingleRowNeurons(startLayerIdx, startChannelIdx, h)));
       }
-      this->visualization_ = _visualization;
+      this->visualization_.push_back(_visualization);
     }
   }
 
@@ -171,10 +171,6 @@ namespace caffe{
   void FeedbackNet<Dtype>::VisualizeTopKNeurons(int startLayerIdx, int k, bool weight_flag){
     this->startLayerIdx_ = startLayerIdx;
     Blob<Dtype>* input_blob = (this->blobs_[0]).get();
-    Blob<Dtype>* _visualization 
-      = new Blob<Dtype>(input_blob->num(), input_blob->channels(),
-			input_blob->height(), input_blob->width());
-    memset(_visualization->mutable_cpu_data(), 0, sizeof(Dtype)*_visualization->count());
 
     //each int* corresponds to a rank, sized in the number of images in each batch
     vector<int*> channel_offsets;
@@ -193,12 +189,11 @@ namespace caffe{
       for(int n = 0; n<input_blob->num(); ++n){
 	LOG(INFO)<<"Visualize image "<< n <<" using "<< channel_offset[n] <<" / "<<in_channel_offset[n];
       }
-      _visualization ->add(*(VisualizeSingleNeuron(startLayerIdx, 
-							channel_offset, 
-							in_channel_offset,
-							weight_flag)));
+      this->visualization_.push_back(VisualizeSingleNeuron(startLayerIdx, 
+							   channel_offset, 
+							   in_channel_offset,
+							   weight_flag));
     }
-    this->visualization_ = _visualization;
   }
 
   template<typename Dtype>
@@ -216,11 +211,11 @@ namespace caffe{
       LOG(ERROR)<<"Wrong Height offset";
     }
     else{
-        for (int i = 0; i<output_layer_width; ++i) {
-            int startOffset = i + output_layer_width * heightOffset;
-            _visualization->add(*(VisualizeSingleNeuron(startLayerIdx, startChannelIdx, 
-							startOffset, true)));
-        }
+      for (int i = 0; i<output_layer_width; ++i) {
+	int startOffset = i + output_layer_width * heightOffset;
+	_visualization->add(*(VisualizeSingleNeuron(startLayerIdx, startChannelIdx, 
+						    startOffset, true)));
+      }
     }
     return _visualization;
   }
@@ -237,14 +232,14 @@ namespace caffe{
     memset(_visualization->mutable_cpu_data(), 0, sizeof(Dtype)*_visualization->count());
 
     if(widthOffset < 0 || widthOffset >= output_layer_width) {
-        LOG(ERROR)<<"Wrong Height offset";
+      LOG(ERROR)<<"Wrong Height offset";
     }
     else{
-        for (int i = 0; i<output_layer_height; ++i) {
-            int startOffset = i + output_layer_width + widthOffset;;
-            _visualization->add(*(VisualizeSingleNeuron(startLayerIdx, startChannelIdx, 
-							startOffset, true)));
-        }
+      for (int i = 0; i<output_layer_height; ++i) {
+	int startOffset = i + output_layer_width + widthOffset;;
+	_visualization->add(*(VisualizeSingleNeuron(startLayerIdx, startChannelIdx, 
+						    startOffset, true)));
+      }
     }
     return _visualization;
   }
@@ -309,40 +304,46 @@ namespace caffe{
   template<typename Dtype>
   void FeedbackNet<Dtype>::DrawVisualization(string dir, string prefix) {
     //Normalization:
-    for(int n = 0; n<this->visualization_->num(); ++n) {
-      for (int c = 0; c<this->visualization_->channels(); c++) {
-	ImageNormalization<Dtype>(this->visualization_->mutable_cpu_data() 
-				  + this->visualization_->offset(n, c),
-				  this->visualization_->offset(0,1), 
-				  (Dtype)100, (Dtype)20.0);
+    for(int k = 0; k<this->visualization_.size();++k){
+      Blob<Dtype>* _visualzation = this->visualization_[k];
+      for(int n = 0; n<_visualzation->num(); ++n) {
+	for (int c = 0; c<_visualzation->channels(); c++) {
+	  ImageNormalization<Dtype>(_visualzation->mutable_cpu_data() 
+				    + _visualzation->offset(n, c),
+				    _visualzation->offset(0,1), 
+				    (Dtype)100, (Dtype)25.0);
+	}
       }
     }
-    for (int n = 0; n<visualization_->num(); n++) {
-      std::ostringstream convert;
-      convert<<dir<<prefix<<n;
-      string filename = convert.str();
-      if (visualization_->channels() == 3 || visualization_->channels() == 1){
-	//Visualize as RGB / Grey image
-	filename = filename + ".jpg";
-	LOG(INFO)<<"Saving image "<<filename;
-	const int _height = visualization_->height();
-	const int _width = visualization_->width();
-	const int _channel = visualization_->channels();
-	WriteDataToImage<Dtype>(filename, _channel, _height, _width,
-			 visualization_->mutable_cpu_data() + visualization_->offset(n) );
-      }
-      else{
-	//Visualize each channel as a separate image
-	for(int c = 0; c<visualization_->channels(); c++) {
-	  convert<<filename<<"_"<<c<<".jpg";
+    for(int k = 0; k<this->visualization_.size();++k){
+      Blob<Dtype>* _visualzation = this->visualization_[k];
+      for (int n = 0; n<_visualzation->num(); n++) {
+	std::ostringstream convert;
+	convert<<dir<<prefix<<n<<"_"<<k;
+	string filename = convert.str();
+	if (_visualzation->channels() == 3 || _visualzation->channels() == 1){
+	  //Visualize as RGB / Grey image
+	  filename = filename + ".jpg";
 	  LOG(INFO)<<"Saving image "<<filename;
-	  string filename = convert.str();
-	  const int _height = visualization_->height();
-	  const int _width = visualization_->width();
-	  const int _channel = visualization_->channels();
+	  const int _height = _visualzation->height();
+	  const int _width = _visualzation->width();
+	  const int _channel = _visualzation->channels();
 	  WriteDataToImage<Dtype>(filename, _channel, _height, _width,
-				  visualization_->mutable_cpu_data() 
-				  + visualization_->offset(n, c) );
+				  _visualzation->mutable_cpu_data() + _visualzation->offset(n) );
+	}
+	else{
+	  //Visualize each channel as a separate image
+	  for(int c = 0; c<_visualzation->channels(); c++) {
+	    convert<<filename<<"_"<<c<<".jpg";
+	    LOG(INFO)<<"Saving image "<<filename;
+	    string filename = convert.str();
+	    const int _height = _visualzation->height();
+	    const int _width = _visualzation->width();
+	    const int _channel = _visualzation->channels();
+	    WriteDataToImage<Dtype>(filename, _channel, _height, _width,
+				    _visualzation->mutable_cpu_data() 
+				    + _visualzation->offset(n, c) );
+	  }
 	}
       }
     }
@@ -459,22 +460,22 @@ namespace caffe{
      */
 
     /*
-    LOG(INFO)<<"Initial Output Values:";
-    for(int n = 0; n<top_output_blob->num(); ++n){
+      LOG(INFO)<<"Initial Output Values:";
+      for(int n = 0; n<top_output_blob->num(); ++n){
       output_value[n] = *(top_output_blob->cpu_data() 
-			  + top_output_blob->offset(n, channels[n]) + offsets[n]);
+      + top_output_blob->offset(n, channels[n]) + offsets[n]);
       output_sum += output_value[n];
       LOG(INFO)<<"Using "<<channels[n] << " / "<<offsets[n]
-	       <<" as target neurons for image "<<n
-	       <<" : "<<output_value[n] << "\n";
+      <<" as target neurons for image "<<n
+      <<" : "<<output_value[n] << "\n";
       LOG(INFO)<<"Top "<<k<<" neurons for image "<<n<<":";      
       for(int i = 0; i<k; i++){
-          Dtype value = *(top_output_blob->cpu_data()
-			  + top_output_blob->offset(n, (k_channels[i])[n]) 
-			  + (k_offsets[i])[n]);
-          LOG(INFO)<<"[Channel: " <<(k_channels[i])[n] <<":"<< value << "] ";
+      Dtype value = *(top_output_blob->cpu_data()
+      + top_output_blob->offset(n, (k_channels[i])[n]) 
+      + (k_offsets[i])[n]);
+      LOG(INFO)<<"[Channel: " <<(k_channels[i])[n] <<":"<< value << "] ";
       }
-    }
+      }
     */
 
     int iteration  = 0;

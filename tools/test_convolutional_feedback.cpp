@@ -59,7 +59,6 @@ int main(int argc, char** argv){
 	caffe_test_net.Visualize(startLayer, rand_idx, 0, 0, test_flag);
       }
       if(test_flag == false){
-          Blob<float>* visualization = caffe_test_net.GetVisualization();
 	  std::ostringstream convert;
 	  convert << iter <<"_";
 	  string prefix = convert.str();
