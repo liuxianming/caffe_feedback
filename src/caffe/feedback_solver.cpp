@@ -113,11 +113,10 @@ void FeedbackSolver<Dtype>::Test() {
   vector<Blob<Dtype>*> bottom_vec;
   Dtype loss = 0;
   for (int i = 0; i < param_.test_iter(); ++i) {
-    LOG(INFO)<<"Testing Batch #"<<i<<"...";
     Dtype iter_loss;
     const vector<Blob<Dtype>*>& result =
-      //test_net_->Forward(bottom_vec, &iter_loss);
-      test_net_->FeedbackForward(bottom_vec, &iter_loss);
+      test_net_->Forward(bottom_vec, &iter_loss);
+    //test_net_->FeedbackForward(bottom_vec, &iter_loss);
     if (param_.test_compute_loss()) {
       loss += iter_loss;
     }
