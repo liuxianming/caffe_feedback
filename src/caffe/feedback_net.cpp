@@ -281,7 +281,8 @@ namespace caffe{
   template<typename Dtype>
   void FeedbackNet<Dtype>::UpdateEqFilter(int startLayerIdx, 
 					  int* startChannelIdxs, 
-					  int* startOffsets){
+					  int* startOffsets
+            int endLayerIdx){
     this->startLayerIdx_ = startLayerIdx;
     //Generate top mask
     generateStartTopFilter(startChannelIdxs, startOffsets);
@@ -289,7 +290,7 @@ namespace caffe{
     //firs build top_filter vector
     this->eq_filter_top_.clear();
     this->eq_filter_top_.push_back(start_top_filter_);
-    for(int i = this->startLayerIdx_; i > 0; --i){
+    for(int i = this->startLayerIdx_; i > endLayerIdx; --i){
       //LOG(INFO)<<"Processing Layer ["<<this->layers_[i]->layer_param().name()<<"]";
       string blob_name = this->blob_names_[(this->bottom_id_vecs_[i])[0]];
       //LOG(INFO)<<"Using BLOB ["<<blob_name<<"] as input";
@@ -480,7 +481,9 @@ namespace caffe{
       if (loss != NULL) {
 	*loss = Dtype(0.);
       }
-      UpdateEqFilter(startLayerIdx, channels, offsets);
+      //For feedbackforward, there is no need to calculate the last layer's eq_filter
+      //It is only used for visualization
+      UpdateEqFilter(startLayerIdx, channels, offsets, 1);
       //Forward - don't deal with data layer
       for (int i = 1; i < this->layers_.size(); ++i) {
 	Dtype layer_loss 

@@ -363,7 +363,7 @@ class PoolingLayer : public Layer<Dtype> {
 
   //Get the max_pooling mask for each input image
   inline shared_ptr<Blob<Dtype> >  GetMask(){
-	  return this->blobs_[0];
+	  return this->pooling_mask_;
   }
 
  protected:

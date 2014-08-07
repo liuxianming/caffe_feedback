@@ -24,7 +24,9 @@ namespace caffe{
 
     void UpdateEqFilter(int startLayerIdx, 
 			int* startChannelIdxs, 
-			int* startOffsets);
+			int* startOffsets
+            int endLayerIdx = 0);
+    //By default, the endLayerIdx = 0, which means the input data layer
 
     void SearchTopKNeurons(int startLayerIdx, int k, vector<int*> channel_offsets, vector<int*> in_channel_offsets);
 
