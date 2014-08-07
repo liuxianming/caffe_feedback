@@ -321,10 +321,10 @@ namespace caffe{
       std::ostringstream convert;
       convert<<dir<<prefix<<n;
       string filename = convert.str();
-      LOG(INFO)<<"Saving image "<<filename;
       if (visualization_->channels() == 3 || visualization_->channels() == 1){
 	//Visualize as RGB / Grey image
 	filename = filename + ".jpg";
+	LOG(INFO)<<"Saving image "<<filename;
 	const int _height = visualization_->height();
 	const int _width = visualization_->width();
 	const int _channel = visualization_->channels();
@@ -335,6 +335,7 @@ namespace caffe{
 	//Visualize each channel as a separate image
 	for(int c = 0; c<visualization_->channels(); c++) {
 	  convert<<filename<<"_"<<c<<".jpg";
+	  LOG(INFO)<<"Saving image "<<filename;
 	  string filename = convert.str();
 	  const int _height = visualization_->height();
 	  const int _width = visualization_->width();
