@@ -56,6 +56,22 @@ message NetParameter {
   optional bool force_backward = 5 [default = false];
 }
 
+//A messge that records the basic configuration for visualizer
+message VisualizerParameter {
+  optional string visualization_net = 1; // The proto file for visualizing network
+  optional string model = 2 [default = "caffe_reference_model"]; // The model used for visualization
+  optional int32 max_iter = 3; // The max number of iterations for visualization
+  optional string store_dir = 4 [default = "./"]; // The dir to save visualization results
+  enum VisualizerMode {
+    CPU = 0;
+    GPU = 1;
+  }
+  optional VisualizerMode visualizer_mode = 5 [default = GPU]; // The mode used for visualization
+  optional string target_layer = 6 [default = "fc8"] // The layer name need to visualize
+  optional int32 k = 7 [default = 1]; // The number of neurons to visualize
+  optional int32 device_id = 8 [default = 0];
+}
+
 message SolverParameter {
   optional string train_net = 1; // The proto file for the training net.
   optional string test_net = 2; // The proto file for the testing net.
