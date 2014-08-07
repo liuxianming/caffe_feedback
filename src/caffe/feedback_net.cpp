@@ -261,7 +261,7 @@ namespace caffe{
     long channel_offset = _top_output_blob->height() * _top_output_blob->width();
     long _img_num = this->blobs_[0]->num();
 
-    start_top_filter_ = new Blob<Dtype>(_img_num, 1, 1, _input_num);
+    start_top_filter_->Reshape(_img_num, 1, 1, _input_num);
 
     //Initialize the value of start_top_filter_
     Dtype* start_top_filter_data = start_top_filter_->mutable_cpu_data();
