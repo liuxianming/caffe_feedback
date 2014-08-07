@@ -1,0 +1,6 @@
+visualization_net: "alexnet_visualization_feedback.prototxt"
+model: "caffe_alexnet_model"
+max_iter: 1000
+store_dir: "./visualization_imagenet/"
+target_layer: "fc8"
+k: 1
