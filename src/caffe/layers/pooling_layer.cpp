@@ -43,10 +43,16 @@ namespace caffe {
 			pooled_width_);
     }
 
-    shared_ptr<Blob<Dtype> > pooling_mask(new Blob<Dtype>(bottom[0]->num(), this->channels_,
-							  this->pooled_height_, this->pooled_width_));
-    memset(pooling_mask->mutable_cpu_data(), 0, sizeof(Dtype) * pooling_mask->count());
-    this->pooling_mask_ = pooling_mask;
+    pooling_mask_.Reshape(bottom[0]->num(), channels_, pooled_height_,
+			pooled_width_);
+
+    // this->pooling_mask_ = new Blob<Dtype>(bottom[0]->num(), this->channels_,
+       //  this->polled_height_, this->pooled_width_));
+//    shared_ptr<Blob<Dtype> > pooling_mask(new Blob<Dtype>(bottom[0]->num(), this->channels_,
+	//						  this->pooled_height_, this->pooled_width_));
+    //memset(this->pooling_mask_.mutable_cpu_data(), 0, sizeof(Dtype) * this->pooling_mask_.count());
+//    memset(pooling_mask->mutable_cpu_data(), 0, sizeof(Dtype) * pooling_mask->count());
+   // this->pooling_mask_ = pooling_mask;
     //this->blobs_.push_back(pooling_mask);
   }
 
@@ -69,8 +75,8 @@ namespace caffe {
       // The main loop
       for (int n = 0; n < bottom[0]->num(); ++n) {
 	for (int c = 0; c < channels_; ++c) {
-	  Dtype* mask_data = pooling_mask_->mutable_cpu_data() 
-	    + pooling_mask_->offset(n,c);
+	  Dtype* mask_data = pooling_mask_.mutable_cpu_data() 
+	    + pooling_mask_.offset(n,c);
 	  for (int ph = 0; ph < pooled_height_; ++ph) {
 	    for (int pw = 0; pw < pooled_width_; ++pw) {
 	      int hstart = ph * stride_;
@@ -227,10 +233,15 @@ namespace caffe {
     if(this->layer_param_.pooling_param().pool() == PoolingParameter_PoolMethod_MAX){
       //dealing with MAX_POOLING
       int M_ = input[0]->num();
+      // LOG(ERROR) << "M_ " << M_;
       int K_ = input[0]->count() / input[0]->num();
+      // LOG(ERROR) << "K_ " << K_;
       int N_ = this->pooled_height_ * this->pooled_width_;
+      // LOG(ERROR) << "N_ " << N_;
       int top_output_num = top_filter->height();
+      // LOG(ERROR) << "top_filter height " << top_output_num;
       int top_output_channel = top_filter->channels();
+      // LOG(ERROR) << "top_filter channel " << top_output_channel;
 
       this->eq_filter_ = new Blob<Dtype>(M_, top_output_channel, top_output_num, K_);
       const Dtype* top_filter_data = top_filter->cpu_data();
@@ -240,11 +251,11 @@ namespace caffe {
       memset(eq_filter_data_, 0, sizeof(Dtype) * this->eq_filter_->count());
 
       for (int n = 0; n<input[0]->num(); n++){
-	for (int c = 0; c< pooling_mask_->channels(); c++){
-	  const Dtype* mask_data = pooling_mask_->cpu_data() + pooling_mask_->offset(n,c);
-	  for (int offset = 0; offset < pooling_mask_->height() * pooling_mask_->width(); ++offset) {
+	for (int c = 0; c< pooling_mask_.channels(); c++){
+	  const Dtype* mask_data = pooling_mask_.cpu_data() + pooling_mask_.offset(n,c);
+	  for (int offset = 0; offset < pooling_mask_.height() * pooling_mask_.width(); ++offset) {
 	    int mask_offset = static_cast<int>(*(mask_data + offset));
-	    for(int top_c = 0; top_c < top_filter->channels(); top_c++){
+      for(int top_c = 0; top_c < top_filter->channels(); top_c++){
 	      for(int top_o = 0; top_o< top_output_num; top_o++) {
 		Dtype _f_value = *(top_filter_data + top_filter->offset(n, top_c, top_o) +
 				   c * this->pooled_height_ * this->pooled_width_ + offset);
