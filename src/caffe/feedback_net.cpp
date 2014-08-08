@@ -169,6 +169,8 @@ namespace caffe{
 
   template<typename Dtype>
   void FeedbackNet<Dtype>::VisualizeTopKNeurons(int startLayerIdx, int k, bool weight_flag){
+    LOG(INFO)<<"Visualize top "<<k<<" neurons";    
+    this->visualization_.clear();
     this->startLayerIdx_ = startLayerIdx;
     Blob<Dtype>* input_blob = (this->blobs_[0]).get();
 
@@ -311,7 +313,7 @@ namespace caffe{
 	  ImageNormalization<Dtype>(_visualzation->mutable_cpu_data() 
 				    + _visualzation->offset(n, c),
 				    _visualzation->offset(0,1), 
-				    (Dtype)100, (Dtype)25.0);
+				    (Dtype)100, (Dtype)30.0);
 	}
       }
     }

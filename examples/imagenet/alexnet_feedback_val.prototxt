@@ -1,4 +1,4 @@
-name: "AlexFeedbackNet"
+name: "AlexNet"
 layers {
   name: "data"
   type: DATA

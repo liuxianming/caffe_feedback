@@ -87,6 +87,7 @@ namespace caffe {
         else if (param_.k() == 1) {
           const vector<Blob<Dtype>*>& result = net_->FeedbackForwardPrefilled();
         }
+	LOG(INFO)<<"Forwarding function complete";
         //Start visualization
         net_->VisualizeTopKNeurons(param_.target_layer(), param_.k(), false);
       }

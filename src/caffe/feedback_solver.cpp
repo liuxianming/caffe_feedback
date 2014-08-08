@@ -112,6 +112,7 @@ void FeedbackSolver<Dtype>::Test() {
   vector<Dtype> test_score;
   vector<Blob<Dtype>*> bottom_vec;
   Dtype loss = 0;
+
   for (int i = 0; i < param_.test_iter(); ++i) {
     Dtype iter_loss;
     const vector<Blob<Dtype>*>& result =

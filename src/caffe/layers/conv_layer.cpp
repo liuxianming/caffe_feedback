@@ -82,6 +82,7 @@ namespace caffe {
 	bias_multiplier_data[i] = 1.;
       }
     }
+
     //Setting up the eq_filter
     this->eq_filter_ = new Blob<Dtype>(bottom[0]->num(), 1, 1, bottom[0]->channels() * bottom[0]->height() * bottom[0]->width());
     //Prepare memory for convolution / deconvolution

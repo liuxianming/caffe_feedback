@@ -28,29 +28,39 @@ namespace caffe {
     // Check if we need to set up the weights
     if (this->blobs_.size() > 0) {
       LOG(INFO) << "Skipping parameter initialization";
-    } 
-    else {
+    } else {
       if (bias_term_) {
 	this->blobs_.resize(2);
-      } 
-      else {
+      } else {
 	this->blobs_.resize(1);
       }
       // Intialize the weight
       this->blobs_[0].reset(new Blob<Dtype>(1, 1, N_, K_));
       // fill the weights
-      shared_ptr<Filler<Dtype> > weight_filler(GetFiller<Dtype>(this->layer_param_.inner_product_param().weight_filler()));
+      shared_ptr<Filler<Dtype> > weight_filler(GetFiller<Dtype>(
+								this->layer_param_.inner_product_param().weight_filler()));
       weight_filler->Fill(this->blobs_[0].get());
       // If necessary, intiialize and fill the bias term
       if (bias_term_) {
 	this->blobs_[1].reset(new Blob<Dtype>(1, 1, 1, N_));
-	shared_ptr<Filler<Dtype> > bias_filler(GetFiller<Dtype>(this->layer_param_.inner_product_param().bias_filler()));
+	shared_ptr<Filler<Dtype> > bias_filler(GetFiller<Dtype>(
+								this->layer_param_.inner_product_param().bias_filler()));
 	bias_filler->Fill(this->blobs_[1].get());
       }
-      //Setting up the eq_filter
-      this->eq_filter_ = new Blob<Dtype>(bottom[0]->num(), 1, 1, bottom[0]->channels() * bottom[0]->height() * bottom[0]->width());
-    }
-  }  // parameter initialization
+    }  // parameter initialization
+
+    // Setting up the bias multiplier
+    if (bias_term_) {
+      bias_multiplier_.reset(new SyncedMemory(M_ * sizeof(Dtype)));
+        Dtype* bias_multiplier_data =
+	  reinterpret_cast<Dtype*>(bias_multiplier_->mutable_cpu_data());
+        for (int i = 0; i < M_; ++i) {
+	  bias_multiplier_data[i] = 1.;
+        }
+    }  
+    //Setting up the eq_filter
+    this->eq_filter_ = new Blob<Dtype>(bottom[0]->num(), 1, 1, bottom[0]->channels() * bottom[0]->height() * bottom[0]->width());
+  }
 
   template <typename Dtype>
   Dtype InnerProductLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
