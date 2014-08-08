@@ -227,10 +227,15 @@ namespace caffe {
     if(this->layer_param_.pooling_param().pool() == PoolingParameter_PoolMethod_MAX){
       //dealing with MAX_POOLING
       int M_ = input[0]->num();
+      // LOG(ERROR) << "M_ " << M_;
       int K_ = input[0]->count() / input[0]->num();
+      // LOG(ERROR) << "K_ " << K_;
       int N_ = this->pooled_height_ * this->pooled_width_;
+      // LOG(ERROR) << "N_ " << N_;
       int top_output_num = top_filter->height();
+      // LOG(ERROR) << "top_filter height " << top_output_num;
       int top_output_channel = top_filter->channels();
+      // LOG(ERROR) << "top_filter channel " << top_output_channel;
 
       //this->eq_filter_->Reshape(M_, top_output_channel, top_output_num, K_);
       const Dtype* top_filter_data = top_filter->cpu_data();
@@ -244,7 +249,7 @@ namespace caffe {
 	  const Dtype* mask_data = pooling_mask_.cpu_data() + pooling_mask_.offset(n,c);
 	  for (int offset = 0; offset < pooling_mask_.height() * pooling_mask_.width(); ++offset) {
 	    int mask_offset = static_cast<int>(*(mask_data + offset));
-	    for(int top_c = 0; top_c < top_filter->channels(); top_c++){
+      for(int top_c = 0; top_c < top_filter->channels(); top_c++){
 	      for(int top_o = 0; top_o< top_output_num; top_o++) {
 		Dtype _f_value = *(top_filter_data + top_filter->offset(n, top_c, top_o) +
 				   c * this->pooled_height_ * this->pooled_width_ + offset);
