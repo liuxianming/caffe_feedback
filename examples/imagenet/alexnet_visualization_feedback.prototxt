@@ -1,18 +1,16 @@
-name: "AlexNet"
+name: "AlexFeedbackNet"
 layers {
   name: "data"
-  type: IMAGE_DATA
+  type: DATA
+  data_param {
+    source: "imagenet_val_leveldb"
+    mean_file: "../../data/ilsvrc12/imagenet_mean.binaryproto"
+    batch_size: 50
+    crop_size: 227
+    mirror: true
+  }
   top: "data"
   top: "label"
-  image_data_param {
-    source: "./filelist.txt"
-    mean_file: "../../data/ilsvrc12/imagenet_mean.binaryproto"
-    batch_size: 7
-    crop_size: 227
-    mirror: false
-    new_height: 255
-    new_width: 255
-  }
 }
 layers {
   name: "conv1"
