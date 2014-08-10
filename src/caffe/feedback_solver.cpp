@@ -81,7 +81,7 @@ void FeedbackSolver<Dtype>::Solve(const char* resume_file) {
   // should be given, and we will just provide dummy vecs.
   vector<Blob<Dtype>*> bottom_vec;
   while (iter_++ < param_.max_iter()) {
-    Dtype loss = net_->FeedbackForwardBackward(bottom_vec);
+    Dtype loss = net_->FeedbackForwardBackward(bottom_vec, param_.top_k());
     ComputeUpdateValue();
     net_->Update();
 
@@ -117,7 +117,7 @@ void FeedbackSolver<Dtype>::Test() {
     Dtype iter_loss;
     const vector<Blob<Dtype>*>& result =
       test_net_->Forward(bottom_vec, &iter_loss);
-    //test_net_->FeedbackForward(bottom_vec, &iter_loss);
+    //test_net_->FeedbackForward(bottom_vec, &iter_loss, param_.top_k());
     if (param_.test_compute_loss()) {
       loss += iter_loss;
     }

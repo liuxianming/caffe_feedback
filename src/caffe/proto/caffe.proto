@@ -119,6 +119,8 @@ message SolverParameter {
   // random number generator -- useful for reproducible results. Otherwise,
   // (and by default) initialize using a seed derived from the system clock.
   optional int64 random_seed = 20 [default = -1];
+  // Used in feedback_solver - the number of top k neurons in final output
+  optional int64 top_k = 21 [default = 1];
 }
 
 // A message that stores the solver snapshots
