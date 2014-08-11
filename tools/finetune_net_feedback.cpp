@@ -20,6 +20,8 @@ int main(int argc, char** argv) {
     return 1;
   }
 
+  LOG(INFO)<<"Finetuning using FeedbackNet";
+
   SolverParameter solver_param;
   ReadProtoFromTextFileOrDie(argv[1], &solver_param);
 
@@ -27,7 +29,7 @@ int main(int argc, char** argv) {
   SGDFeedbackSolver<float> solver(solver_param);
   LOG(INFO) << "Loading from " << argv[2];
   solver.net()->CopyTrainedLayersFrom(string(argv[2]));
-  solver.Solve();
+  solver.Solve(NULL);
   LOG(INFO) << "Optimization Done.";
 
   return 0;

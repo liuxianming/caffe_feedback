@@ -64,7 +64,8 @@ void FeedbackSolver<Dtype>::Solve(const char* resume_file) {
   PreSolve();
 
   iter_ = 0;
-  if (resume_file) {
+  resume_file = NULL;
+  if (resume_file ) {
     LOG(INFO) << "Restoring previous solver status from " << resume_file;
     Restore(resume_file);
   }
@@ -114,10 +115,11 @@ void FeedbackSolver<Dtype>::Test() {
   Dtype loss = 0;
 
   for (int i = 0; i < param_.test_iter(); ++i) {
+	LOG(INFO)<<"Testing batch #"<<i;
     Dtype iter_loss;
     const vector<Blob<Dtype>*>& result =
       test_net_->Forward(bottom_vec, &iter_loss);
-    //test_net_->FeedbackForward(bottom_vec, &iter_loss, param_.top_k());
+      //test_net_->FeedbackForward(bottom_vec, &iter_loss, param_.top_k());
     if (param_.test_compute_loss()) {
       loss += iter_loss;
     }
@@ -177,6 +179,7 @@ void FeedbackSolver<Dtype>::Restore(const char* state_file) {
   NetParameter net_param;
   ReadProtoFromBinaryFile(state_file, &state);
   if (state.has_learned_net()) {
+	  LOG(INFO)<<"Copy trained model from "<<state.learned_net();
     ReadProtoFromBinaryFile(state.learned_net().c_str(), &net_param);
     net_->CopyTrainedLayersFrom(net_param);
   }

@@ -280,16 +280,16 @@ namespace caffe {
     Blob<Dtype> *_start_top_filter = new Blob<Dtype>(_img_num, 1, 1, _input_num);
 
     //Initialize the value of start_top_filter_
-    Dtype *start_top_filter_data = start_top_filter_->mutable_cpu_data();
+    Dtype *start_top_filter_data = _start_top_filter->mutable_cpu_data();
 
-    memset(start_top_filter_data, 0, sizeof(Dtype) * start_top_filter_->count());
+    memset(start_top_filter_data, 0, sizeof(Dtype) * _start_top_filter->count());
 
-    for (int n = 0; n < start_top_filter_->num(); n++) {
+    for (int n = 0; n < _start_top_filter->num(); n++) {
       int startChannelIdx = startChannelIdxs[n];
       int startOffset = startOffsets[n];
       *(start_top_filter_data + channel_offset * startChannelIdx + startOffset)
 	= Dtype(1.);
-      start_top_filter_data += start_top_filter_->offset(1, 0);
+      start_top_filter_data += _start_top_filter->offset(1, 0);
     }
 
     return _start_top_filter;
@@ -302,8 +302,21 @@ namespace caffe {
     Blob<Dtype> *_start_top_filter;
 
     for (int idx = 0; idx < k; ++idx) {
-      Blob<Dtype> *_start_top_filter_single =
-	generateStartTopFilter(startChannelIdxs[i], startOffsets[i]);
+      Blob<Dtype> *_start_top_filter_single = 
+	generateStartTopFilter(startChannelIdxs[idx], startOffsets[idx]);
+
+      /*
+       * Using the output values as weights for each template
+       */
+      //Find weight
+      Blob<Dtype> *_filter_output = (this->top_vecs_[startLayerIdx_])[0];
+      Dtype *output_weights = new Dtype[_filter_output->num()];
+
+      for (int i = 0; i < _filter_output->num(); ++i) {
+    	  output_weights[i] = *(_filter_output->mutable_cpu_data()
+    			  + _filter_output->offset(i, startChannelIdxs[idx][i]) + startOffsets[idx][i]);
+      }
+      _start_top_filter_single->multiply(output_weights);
 
       if (idx == 0) _start_top_filter = _start_top_filter_single;
       else {
@@ -326,14 +339,15 @@ namespace caffe {
       string blob_name = this->blob_names_[(this->bottom_id_vecs_[i])[0]];
       this->layers_[i]->UpdateEqFilter(this->eq_filter_top_.back(), this->bottom_vecs_[i]);
       this->eq_filter_top_.push_back(this->layers_[i]->eq_filter());
+      /*
       //Testing
       bool test_flag = false;
-
       if (test_flag) {
 	Dtype error = test_eq_filter(i, this->eq_filter_top_.back(), startChannelIdxs, startOffsets);
 	LOG(INFO) << "Error of Layer " << this->layer_names_[i] << " is "
 		  << error << " : " << ((error < (Dtype) 16.) ? "OK" : "FAIL");
       }
+      */
     }
   }
 
@@ -478,7 +492,7 @@ namespace caffe {
       this->net_input_blobs_[i]->CopyFrom(*bottom[i]);
     }
 
-    return FeedbackForwardPrefilled(loss);
+    return FeedbackForwardPrefilled(loss, k);
   }
 
 
@@ -500,14 +514,22 @@ namespace caffe {
       //by default, don't use the last layer as feedback target
       //Since in most cases, the last layer is either prob, accuracy, or error layers
       //Note: layers_.size() - 1 is the last layer
-      startLayerIdx = this->layers_.size() - 2;
+      //startLayerIdx = this->layers_.size() - 2;
+      for(int i = this->layers_.size() - 1; i>= 0; --i){
+    	  const LayerParameter &param = this->layers_[i]->layer_param();
+    	  const LayerParameter_LayerType &type = param.type();
+    	  if (type == LayerParameter_LayerType_INNER_PRODUCT) {
+    		  startLayerIdx = i;
+    		  break;
+    	  }
+      }
     }
 
     //search the endLayerIdx: by default, it is the second last layer
     int endLayerIdx = 1;
 
-    for (int i = 1; i < this->layers_.size(); ++i) {
-      const LayerParameter &param = layers_[i]->layer_param();
+    for (int i = 1; i < (this->layers_).size(); ++i) {
+      const LayerParameter &param = this->layers_[i]->layer_param();
       const LayerParameter_LayerType &type = param.type();
 
       if (type == LayerParameter_LayerType_RELUPLUS) {
@@ -515,6 +537,14 @@ namespace caffe {
 	break;
       }
     }
+
+    /*
+    //For debug: output the job information
+    LOG(INFO)<<"Job description: \n"
+    		<<"StartLayerIdx = "<<startLayerIdx<<"\n"
+    		<<"endLayerIdx = " <<endLayerIdx<< "\n"
+    		<<"Feedback using the top ["<<k<<"] neurons";
+    */
 
     Blob<Dtype> *input_blob = (this->blobs_[0]).get();
     vector<int *> k_channels;

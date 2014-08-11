@@ -13,3 +13,4 @@ weight_decay: 0.0005
 snapshot: 2000
 snapshot_prefix: "feedback_alexnet"
 device_id: 0
+top_k: 5

@@ -41,7 +41,7 @@ int main(int argc, char** argv){
       if(topK > 0){      
 	//Forward process using FeedbackNet
 	LOG(INFO)<<"Processing image feedforward...";
-	const vector<Blob<float>*>& result = caffe_test_net.FeedbackForwardPrefilled("fc8");
+	const vector<Blob<float>*>& result = caffe_test_net.FeedbackForwardPrefilled(topK, "fc8");
 	//const vector<Blob<float>*>& result = caffe_test_net.ForwardPrefilled();
 	LOG(INFO)<<"Feedforward complete!";
 	caffe_test_net.VisualizeTopKNeurons(startLayer, topK, false);
@@ -53,7 +53,7 @@ int main(int argc, char** argv){
 	//Forward process using FeedbackNet
 	LOG(INFO)<<"Processing image feedforward...";
 	const vector<Blob<float>*>& result 
-	  = caffe_test_net.FeedbackForwardPrefilled("fc8", rand_idx, 0);
+	  = caffe_test_net.FeedbackForwardPrefilled(topK, "fc8", rand_idx, 0);
 	LOG(INFO)<<"Feedforward complete!";
 	LOG(INFO)<<"Visualizing using "<<rand_idx<<"-th neuron";
 	caffe_test_net.Visualize(startLayer, rand_idx, 0, 0, test_flag);
