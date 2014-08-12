@@ -147,7 +147,7 @@ struct CaffeNet {
     net_->CopyTrainedLayersFrom(pretrained_param_file);
   }
 
-  explicit CaffeNet(shared_ptr<Net<float> > net)
+  explicit CaffeNet(shared_ptr<FeedbackNet<float> > net)
       : net_(net) {}
 
   void Init(string param_file) {
@@ -181,8 +181,9 @@ struct CaffeNet {
     }
   }
 
-  void Forward() {
-    net_->ForwardPrefilled();
+  // parameter k - the number of top neurons used in feedback
+  void Forward(int k) {
+    net_->FeedbackForwardPrefilled(NULL, k);
   }
 
   void Backward() {
@@ -266,7 +267,7 @@ struct CaffeNet {
   }
 
   // The pointer to the internal caffe::Net instant.
-  shared_ptr<Net<float> > net_;
+  shared_ptr<FeedbackNet<float> > net_;
   // if taking input from an ndarray, we need to hold references
   object input_data_;
   object input_labels_;
@@ -278,7 +279,7 @@ class CaffeSGDSolver {
     // as in CaffeNet, (as a convenience, not a guarantee), create a Python
     // exception if param_file can't be opened
     CheckFile(param_file);
-    solver_.reset(new SGDSolver<float>(param_file));
+    solver_.reset(new SGDFeedbackSolver<float>(param_file));
     // we need to explicitly store the net wrapper, rather than constructing
     // it on the fly, so that it can hold references to Python objects
     net_.reset(new CaffeNet(solver_->net()));
@@ -293,8 +294,25 @@ class CaffeSGDSolver {
 
  protected:
   shared_ptr<CaffeNet> net_;
-  shared_ptr<SGDSolver<float> > solver_;
+  shared_ptr<SGDFeedbackSolver<float> > solver_;
+
+  //Remark: the function of visualization is wrapped in visualizer.cpp
 };
+
+Class CaffeVisualizer {
+public:
+  explicit CaffeVisualizer(const string& param_file) {
+    CheckFile(param_file);
+    visualizer_.reset(new Visualizer<float>(param_file));
+    net_.reset(new CaffeNet(visualizer_->net()));
+  }
+
+  void Visualize() { visualizer_->Visualize(); }
+
+protected:
+  shared_ptr<FeedbackNet<float> > net_;
+  shared_ptr<Visualizer<float> > visualizer_;
+}
 
 
 // The boost_python module definition.
@@ -302,7 +320,7 @@ BOOST_PYTHON_MODULE(_caffe) {
   // below, we prepend an underscore to methods that will be replaced
   // in Python
   boost::python::class_<CaffeNet, shared_ptr<CaffeNet> >(
-      "Net", boost::python::init<string, string>())
+      "FeedbackNet", boost::python::init<string, string>())
       .def(boost::python::init<string>())
       .def("_forward",          &CaffeNet::Forward)
       .def("_backward",         &CaffeNet::Backward)
@@ -334,10 +352,14 @@ BOOST_PYTHON_MODULE(_caffe) {
       .add_property("blobs", &CaffeLayer::blobs);
 
   boost::python::class_<CaffeSGDSolver, boost::noncopyable>(
-      "SGDSolver", boost::python::init<string>())
+      "SGDFeedbackSolver", boost::python::init<string>())
       .add_property("net", &CaffeSGDSolver::net)
       .def("solve",        &CaffeSGDSolver::Solve)
       .def("solve",        &CaffeSGDSolver::SolveResume);
+
+  boost::python::class_<CaffeVisualizer, boost::noncopyable>(
+      "Visualizer", boost::python::init<string>())
+      .def("visualize",    &CaffeVisualizer::Visualize);
 
   boost::python::class_<vector<CaffeBlob> >("BlobVec")
       .def(vector_indexing_suite<vector<CaffeBlob>, true>());
