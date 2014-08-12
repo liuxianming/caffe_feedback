@@ -152,7 +152,7 @@ struct CaffeNet {
 
   void Init(string param_file) {
     CheckFile(param_file);
-    net_.reset(new Net<float>(param_file));
+    net_.reset(new FeedbackNet<float>(param_file));
   }
 
 
@@ -299,7 +299,7 @@ class CaffeSGDSolver {
   //Remark: the function of visualization is wrapped in visualizer.cpp
 };
 
-Class CaffeVisualizer {
+class CaffeVisualizer {
 public:
   explicit CaffeVisualizer(const string& param_file) {
     CheckFile(param_file);
@@ -310,9 +310,9 @@ public:
   void Visualize() { visualizer_->Visualize(); }
 
 protected:
-  shared_ptr<FeedbackNet<float> > net_;
+  shared_ptr<CaffeNet> net_;
   shared_ptr<Visualizer<float> > visualizer_;
-}
+};
 
 
 // The boost_python module definition.
