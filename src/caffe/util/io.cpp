@@ -226,6 +226,7 @@ namespace caffe {
     float max = (float)0.;
     float min = imgData[0];
     for (int i = 0; i<len; i++){
+      //imgData[i] = fabs(imgData[i]);
       float val = imgData[i];
       if(val < min) min = val;
       if(val > max) max = val;
@@ -246,6 +247,7 @@ namespace caffe {
       else if(scaler > 0){
 	imgData[i] = imgData[i] * scaler + mean;
       }
+      //imgData[i] = std::max(mean, imgData[i]);
     }
   }
 
@@ -254,6 +256,7 @@ namespace caffe {
     double max = (double)0.;
     double min = imgData[0];
     for (int i = 0; i<len; i++){
+      //imgData[i] = fabs(imgData[i]);
       double val = imgData[i];
       if(val < min) min = val;
       if(val > max) max = val;
@@ -274,6 +277,7 @@ namespace caffe {
       else if(scaler > 0){
 	imgData[i] = imgData[i] * scaler + mean;
       }
+      //imgData[i] = std::max(mean, imgData[i]);
     }
   }
 

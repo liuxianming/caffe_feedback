@@ -100,7 +100,7 @@ namespace caffe {
       std::ostringstream convert;
       convert << iter_ <<"_";
       string prefix = convert.str();
-      net_->DrawVisualization(param_.store_dir(), prefix);
+      net_->DrawVisualization(param_.store_dir(), prefix, 1.0);
       LOG(INFO)<<"Complete";
     }
   }

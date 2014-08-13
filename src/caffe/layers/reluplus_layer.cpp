@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <cstdlib>
 
 #include "caffe/neuron_layers.hpp"
 #include "caffe/layer.hpp"
@@ -109,6 +110,26 @@ namespace caffe {
     int inputsize = input[0]->count() / input[0]->num();
     const Dtype* input_data = input[0]->cpu_data();
 
+    /*
+    //calculate the average of w*x
+    //1. apply current activation to eq_filter
+    caffe_mul(this->eq_filter_->count(), eq_filter_data, activation_data, eq_filter_data);
+    Dtype* abs_input_data = new Dtype[input[0]->count()];
+    Dtype* abs_eq_filter_data = new Dtype[this->eq_filter_->count()];
+    for(int i = 0; i<input[0]->count(); ++i){
+      abs_input_data[i] = fabs(max(input_data[i], Dtype(0.)));
+      abs_eq_filter_data[i] = fabs(eq_filter_data[i]);
+    }
+    //2. calcuate the average
+    Dtype* m_response = new Dtype[input[0]->num()];
+    for(int n = 0; n<input[0]->num(); ++n){
+      m_response[n] = caffe_cpu_dot<Dtype>(inputsize, 
+					   abs_eq_filter_data + this->eq_filter_->offset(n), 
+					   abs_input_data + input[0]->offset(n))
+	/ inputsize;
+    }
+    */
+    
     for (int m = 0; m<input[0]->num(); m++) {
       for (int offset = 0; offset<inputsize; offset++) {
 	Dtype _value = *(input_data + input[0]->offset(m) + offset);
@@ -118,15 +139,14 @@ namespace caffe {
 	  *(eq_filter_data + offset + this->eq_filter_->offset(m)) 
 	    = (Dtype) 0.;
 	}
-	if(top_filter_value <= THRESHOLD) {
+	
+	//add a new version of activation function: abs(wx) >= THRESHOLD
+	int img_idx = offset / inputsize;	
+	//if(fabs(top_filter_value * _value) < (1.0 * m_response[img_idx])) {
+	if((top_filter_value)<= THRESHOLD) {
 	  //set activation
 	  *(activation_data + offset + this->activation_->offset(m)) = (Dtype) 0.;
 	}
-	/*
-	else if(top_filter_value > THRESHOLD){
-	  *(activation_data + offset + this->activation_->offset(m)) = (Dtype) 1.;
-	}
-	*/
       }//for each input element
     }// for each image in the mini-batch
     //Apply activation to eq_filter
