@@ -162,6 +162,23 @@ class AccuracyLayer : public Layer<Dtype> {
   }
 };
 
+  template <typename Dtype>
+  class BAccuracyLayer : public Layer<Dtype> {
+  public:
+    explicit BAccuracyLayer(const LayerParameter& param)
+      : Layer<Dtype>(param) {}
+    virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
+		       vector<Blob<Dtype>*>* top);
+
+  protected:
+    virtual Dtype Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+			      vector<Blob<Dtype>*>* top);
+    virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+			      const bool propagate_down, vector<Blob<Dtype>*>* bottom) {
+      NOT_IMPLEMENTED;
+    }
+  };
+
 /* Also see
 - SoftmaxWithLossLayer in vision_layers.hpp
 */

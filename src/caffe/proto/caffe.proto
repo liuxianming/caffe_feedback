@@ -150,6 +150,7 @@ message LayerParameter {
     // the type is unspecified).
     NONE = 0;
     ACCURACY = 1;
+    BACCURACY = 32;
     BNLL = 2;
     CONCAT = 3;
     CONVOLUTION = 4;
