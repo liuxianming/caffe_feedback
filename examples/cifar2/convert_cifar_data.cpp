@@ -53,6 +53,8 @@ void convert_dataset(const string &input_folder, const string &output_folder) {
                                &train_db);
     CHECK(status.ok()) << "Failed to open leveldb.";
 
+    int counter = 0;
+
     for (int fileid = 0; fileid < kCIFARTrainBatches; ++fileid) {
         // Open files
         LOG(INFO) << "Training Batch " << fileid + 1;
@@ -64,15 +66,23 @@ void convert_dataset(const string &input_folder, const string &output_folder) {
         for (int itemid = 0; itemid < kCIFARBatchSize; ++itemid) {
             read_image(&data_file, &label, str_buffer);
 
-            //Create a dataset containing only "cat = 3" and "dog = 5"
-            if (label == 3) {
-                label = 0;
-            }
-            else if (label == 5) {
+            //Create a dataset containing "dog = 5" as positive and others as negative
+	    //for other classes, using some counter to select image
+            if (label == 5) {
                 label = 1;
             }
-            else
-                continue;
+            else{
+	      counter++;
+	      //sample one image every 9 
+	      if (counter % 9 == 1) {
+		LOG(INFO)<<"Select image #" << itemid << " from batch #" << fileid<< " into training. "
+			 <<"Label changes "<<label << "->"<<0;
+		label = 0;
+	      }
+	      else{
+		continue;
+	      }
+	    }
 
             datum.set_label(label);
             datum.set_data(str_buffer, kCIFARImageNBytes);
@@ -92,18 +102,25 @@ void convert_dataset(const string &input_folder, const string &output_folder) {
                             std::ios::in | std::ios::binary);
     CHECK(data_file) << "Unable to open test file.";
 
+    //reset the counter
+    counter = 0;
     for (int itemid = 0; itemid < kCIFARBatchSize; ++itemid) {
         read_image(&data_file, &label, str_buffer);
-
-        //Create a dataset containing only "cat = 3" and "dog = 5"
-        if (label == 3) {
-            label = 0;
-        }
-        else if (label == 5) {
-            label = 1;
-        }
-        else
-            continue;
+	if (label == 5) {
+	  label = 1;
+	}
+	else{
+	  ++counter;
+	  //sample one image every 9 
+	  if (counter % 9 == 1) {
+	    LOG(INFO)<<"Select image #" << itemid << " into testing. "
+		     <<"Label changes "<<label << "->"<<0;
+	    label = 0;
+	  }
+	  else{
+	    continue;
+	  }
+	}
 
         datum.set_label(label);
         datum.set_data(str_buffer, kCIFARImageNBytes);
