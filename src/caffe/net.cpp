@@ -167,6 +167,12 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
       need_backward = true;
     }
 
+    if(layer_param.type() == LayerParameter_LayerType_ACCURACY || 
+       layer_param.type() == LayerParameter_LayerType_BACCURACY) {
+      LOG(INFO)<<"Accuracy layer does not need backward";      
+      need_backward = false;
+    }
+
     // Finally, set the backward flag
     // Also, the backward flag is sequentially stored in blob_need_backward, along the network
     layer_need_backward_.push_back(need_backward);

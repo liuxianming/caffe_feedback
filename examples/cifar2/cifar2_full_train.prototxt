@@ -172,3 +172,11 @@ layers {
   bottom: "ip1"
   bottom: "label"
 }
+layers {
+  name: "accuracy"
+  type: BACCURACY
+  bottom: "ip1"
+  bottom: "label"
+  top: "accuracy"
+}
+

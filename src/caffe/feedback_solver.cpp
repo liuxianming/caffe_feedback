@@ -78,6 +78,10 @@ void FeedbackSolver<Dtype>::Solve(const char* resume_file) {
     Test();
   }
 
+  // The variable is used to show the training accuracy, 
+  // if the last layer of network is accuracy layer
+  Dtype accuracy = (Dtype) 0.;
+
   // For a network that is trained by the solver, no bottom or top vecs
   // should be given, and we will just provide dummy vecs.
   vector<Blob<Dtype>*> bottom_vec;
@@ -85,9 +89,13 @@ void FeedbackSolver<Dtype>::Solve(const char* resume_file) {
     Dtype loss = net_->FeedbackForwardBackward(bottom_vec, param_.top_k());
     ComputeUpdateValue();
     net_->Update();
+    Blob<Dtype>* accuracy_blob = (net_->output_blobs()).back();
+    accuracy += *(accuracy_blob->cpu_data());
 
     if (param_.display() && iter_ % param_.display() == 0) {
       LOG(INFO) << "Iteration " << iter_ << ", loss = " << loss;
+      LOG(INFO) << "Iteration " << iter_ << ", accuracy = " << accuracy / param_.display();
+      accuracy = (Dtype) 0.;
     }
     if (param_.test_interval() && iter_ % param_.test_interval() == 0) {
       Test();
@@ -117,8 +125,8 @@ void FeedbackSolver<Dtype>::Test() {
   for (int i = 0; i < param_.test_iter(); ++i) {
     Dtype iter_loss;
     const vector<Blob<Dtype>*>& result =
-      test_net_->Forward(bottom_vec, &iter_loss);
-      //test_net_->FeedbackForward(bottom_vec, &iter_loss, param_.top_k());
+      //test_net_->Forward(bottom_vec, &iter_loss);
+      test_net_->FeedbackForward(bottom_vec, &iter_loss, param_.top_k());
     if (param_.test_compute_loss()) {
       loss += iter_loss;
     }

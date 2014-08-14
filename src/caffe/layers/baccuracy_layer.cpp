@@ -44,10 +44,10 @@ namespace caffe {
       if (class_label == static_cast<int>(bottom_label[i])) {
 	++accuracy;
       }
-      Dtype prob = Dtype(1.0) / (log( Dtype(-1.0) * bottom_data[i]) + 1);
+      Dtype prob = Dtype(1.0) / (exp( Dtype(-1.0) * bottom_data[i]) + 1);
       //Dtype prob = max(bottom_data[i * dim + static_cast<int>(bottom_label[i])],
       //		       Dtype(kLOG_THRESHOLD));
-      logprob -= log(prob);
+      logprob -= log(prob) * bottom_label[i];
     }
     // LOG(INFO) << "Accuracy: " << accuracy;
     (*top)[0]->mutable_cpu_data()[0] = accuracy / num;

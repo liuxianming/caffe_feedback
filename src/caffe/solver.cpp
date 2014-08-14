@@ -75,6 +75,10 @@ void Solver<Dtype>::Solve(const char* resume_file) {
     Test();
   }
 
+  // The variable is used to show the training accuracy, 
+  // if the last layer of network is accuracy layer
+  Dtype accuracy = (Dtype) 0.;
+
   // For a network that is trained by the solver, no bottom or top vecs
   // should be given, and we will just provide dummy vecs.
   vector<Blob<Dtype>*> bottom_vec;
@@ -83,9 +87,15 @@ void Solver<Dtype>::Solve(const char* resume_file) {
     ComputeUpdateValue();
     net_->Update();
 
+    Blob<Dtype>* accuracy_blob = (net_->output_blobs()).back();
+    accuracy += *(accuracy_blob->cpu_data());
+
     if (param_.display() && iter_ % param_.display() == 0) {
       LOG(INFO) << "Iteration " << iter_ << ", loss = " << loss;
+      LOG(INFO) << "Iteration " << iter_ << ", accuracy = " << accuracy / param_.display();
+      accuracy = (Dtype) 0.;
     }
+
     if (param_.test_interval() && iter_ % param_.test_interval() == 0) {
       Test();
     }

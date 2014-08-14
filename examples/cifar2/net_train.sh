@@ -2,6 +2,6 @@
 
 TOOLS=../../build/tools
 
-GLOG_logtostderr=1 $TOOLS/train_net.bin cifar2_full_solver.prototxt 2>&1 |tee feedback.log
+GLOG_logtostderr=1 $TOOLS/train_net.bin cifar2_full_solver.prototxt 2>&1 |tee train.log
 
 echo "Done."
