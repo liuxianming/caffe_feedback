@@ -11,6 +11,6 @@ max_iter: 10000
 momentum: 0.9
 weight_decay: 0.004
 snapshot: 500
-snapshot_prefix: "feedback_cifar2_binary"
+snapshot_prefix: "feedback2_cifar2_binary"
 device_id: 0
 top_k: 1

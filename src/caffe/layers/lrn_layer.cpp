@@ -178,6 +178,8 @@ namespace caffe {
     product_layer_->Forward(product_bottom_vec_, top);
 
     //store the weights
+    weights_.CopyFrom(* (product_bottom_vec_[1]), false, true);
+    /*
     weights_.CopyFrom(*((*top)[0]), false, true);
     Dtype* weight_data = weights_.mutable_cpu_data();
     const Dtype* top_data = (*top)[0]->cpu_data();
@@ -187,6 +189,7 @@ namespace caffe {
         Dtype top_val = *(top_data + n);
         *(weight_data + n) = ((bottom_val >ESP || bottom_val <-ESP) ? (Dtype) 0. : (top_val / bottom_val));
     }
+    */
 
     return Dtype(0.);
   }

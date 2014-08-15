@@ -54,6 +54,7 @@ namespace caffe {
     UpdateEqFilter(startLayerIdx, startChannelIdxs, startOffsets);
     //Get the eq_filter_ at the data layer as the output;
     Blob<Dtype> *eq_filter_output  = this->eq_filter_top_.back();
+    //LOG(INFO)<<eq_filter_output->num() << " * "<<eq_filter_output->count();
     //Re-organize the eq_filter_output to get this->visualization_
     Blob<Dtype> *input_blob = (this->blobs_[0]).get();
     Blob<Dtype> *_visualization
@@ -68,6 +69,7 @@ namespace caffe {
     for (int i = 0; i < _filter_output->num(); ++i) {
       output_weights[i] = *(_filter_output->mutable_cpu_data()
 			    + _filter_output->offset(i, startChannelIdxs[i]) + startOffsets[i]);
+      LOG(INFO)<<"Weight "<<i<<": "<<output_weights[i];
     }
 
     if (weight_flag) {
@@ -334,6 +336,8 @@ namespace caffe {
     //firs build top_filter vector
     this->eq_filter_top_.clear();
     this->eq_filter_top_.push_back(start_top_filter_);
+
+    //LOG(INFO)<<"Start Layer: "<<this->startLayerIdx_<< " , End Layer: "<<endLayerIdx;
 
     for (int i = this->startLayerIdx_; i >= endLayerIdx; --i) {
       string blob_name = this->blob_names_[(this->bottom_id_vecs_[i])[0]];

@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
   ReadProtoFromTextFileOrDie(argv[1], &visualizer_param);
 
   LOG(INFO) << "Read task from "<<argv[1];
-  Visualizer<float> visualizer(visualizer_param);
+  Visualizer<double> visualizer(visualizer_param);
   visualizer.Visualize();
   LOG(INFO) << "Visualization Done.";
 
