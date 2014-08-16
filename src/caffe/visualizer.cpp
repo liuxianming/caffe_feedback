@@ -105,5 +105,33 @@ namespace caffe {
     }
   }
 
+  // The function is used to visualize the neurons with the images 
+  // which response most significantly at the given neuron
+  template<typename Dtype>
+  void Visualizer<Dtype>::VisualizeNeurons(){
+    LOG(INFO)<<"Start Visualization along neurons";
+    //Create dir
+    boost::filesystem::path save_dir((param_.store_dir()).c_str());
+    if(boost::filesystem::create_directories(save_dir)) {
+      LOG(INFO)<<"Create saving dir "<<param_.store_dir();
+    }
+    //Start iteration
+    for(iter_ = 0; iter_ < param_.max_iter(); ++iter_){
+      LOG(INFO)<<"Processing Batch "<<iter_;
+      //Perform forward()
+      const vector<Blob<Dtype>*>& result = net_->FeedbackForwardPrefilled();      
+      LOG(INFO)<<"Forwarding function complete";
+      //Start visualization
+      vector<int*> channel_offsets = net_->VisualizeTopKNeurons(param_.target_layer(), param_.k(), false);
+
+      //Save visualization to image files
+      std::ostringstream convert;
+      convert << iter_ <<"_";
+      string prefix = convert.str();
+      net_->DrawNeron(param_.store_dir(), channel_offsets[0], prefix, 1.0);
+      LOG(INFO)<<"Complete";
+    }
+  }
+
   INSTANTIATE_CLASS(Visualizer);
 } // namespace caffe

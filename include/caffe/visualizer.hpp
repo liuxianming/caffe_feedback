@@ -14,6 +14,7 @@ namespace caffe {
     explicit Visualizer(const string& param_file);
     void Init(const VisualizerParameter& param);
     void Visualize();
+    void VisualizeNeurons();
     inline shared_ptr<FeedbackNet<Dtype> > net() { return net_; }
 
   protected:

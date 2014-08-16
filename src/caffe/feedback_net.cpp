@@ -177,13 +177,13 @@ namespace caffe {
   }
 
   template<typename Dtype>
-  void FeedbackNet<Dtype>::VisualizeTopKNeurons(string startLayer, int k, bool weight_flag) {
+  vector<int*> FeedbackNet<Dtype>::VisualizeTopKNeurons(string startLayer, int k, bool weight_flag) {
     int startLayerIdx = this->layer_names_index_[startLayer];
-    this->VisualizeTopKNeurons(startLayerIdx, k);
+    return this->VisualizeTopKNeurons(startLayerIdx, k);
   }
 
   template<typename Dtype>
-  void FeedbackNet<Dtype>::VisualizeTopKNeurons(int startLayerIdx, int k, bool weight_flag) {
+  vector<int*> FeedbackNet<Dtype>::VisualizeTopKNeurons(int startLayerIdx, int k, bool weight_flag) {
     LOG(INFO) << "Visualize top " << k << " neurons";
     this->visualization_.clear();
     this->startLayerIdx_ = startLayerIdx;
@@ -215,6 +215,7 @@ namespace caffe {
 							   in_channel_offset,
 							   weight_flag));
     }
+    return channel_offsets;
   }
 
   template<typename Dtype>
@@ -425,6 +426,40 @@ namespace caffe {
 				    + _visualzation->offset(n, c) );
 	  }
 	}
+      }
+    }
+  }
+
+  template<typename Dtype>
+  void FeedbackNet<Dtype>::DrawNeron(string dir, int* channel_offsets, string prefix, Dtype scaler, Dtype mean){
+    //Normalization:
+    for (int k = 0; k < this->visualization_.size(); ++k) {
+      Blob<Dtype> *_visualzation = this->visualization_[k];
+
+      for (int n = 0; n < _visualzation->num(); ++n) {
+	for (int c = 0; c < _visualzation->channels(); c++) {
+	  ImageNormalization<Dtype>(_visualzation->mutable_cpu_data()
+				    + _visualzation->offset(n, c),
+				    _visualzation->offset(0, 1),
+				    mean, scaler);
+	}
+      }
+    }
+    Blob<Dtype> *_visualzation = this->visualization_[0];
+    for (int n = 0; n < _visualzation->num(); n++) {
+      std::ostringstream convert;
+      convert << dir << channel_offsets[n]<<"_"<< prefix << n;
+      string filename = convert.str();
+
+      if (_visualzation->channels() == 3 || _visualzation->channels() == 1) {
+	//Visualize as RGB / Grey image
+	filename = filename + ".jpg";
+	LOG(INFO) << "Saving image " << filename;
+	const int _height = _visualzation->height();
+	const int _width = _visualzation->width();
+	const int _channel = _visualzation->channels();
+	WriteDataToImage<Dtype>(filename, _channel, _height, _width,
+				_visualzation->mutable_cpu_data() + _visualzation->offset(n) );
       }
     }
   }

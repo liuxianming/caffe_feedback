@@ -47,14 +47,17 @@ namespace caffe {
     // Search the layer list and get the index
     void Visualize(string startLayer, int startChannelIdx = 0, int heightOffset  = -1, int widthOffset = -1,  bool test_flag = false);
 
-    void VisualizeTopKNeurons(int startLayerIdx, int k = 1, bool weight_flag = true);
-    void VisualizeTopKNeurons(string startLayer, int k = 1, bool weight_flag = true);
+    //Return value is the top k channels for each image
+    vector<int*> VisualizeTopKNeurons(int startLayerIdx, int k = 1, bool weight_flag = true);
+    vector<int*> VisualizeTopKNeurons(string startLayer, int k = 1, bool weight_flag = true);
     inline vector<Blob<Dtype>*> GetVisualization() {
       return visualization_;
     }
 
     //draw visualization: draw visualization_ to files, stored in dir
     void DrawVisualization(string dir, string prefix = "",
+			   Dtype scaler = Dtype(1.0), Dtype mean = Dtype(100.0));
+    void DrawNeron(string dir, int* channel_offsets, string prefix = "",
 			   Dtype scaler = Dtype(1.0), Dtype mean = Dtype(100.0));
 
     //Member function

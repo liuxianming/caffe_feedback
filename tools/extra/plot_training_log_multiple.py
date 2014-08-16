@@ -27,7 +27,7 @@ def create_field_index():
     train_key = 'Train'
     test_key = 'Test'
     field_index = {train_key:{'Iters':0, 'Seconds':1, train_key + ' loss':2,
-                              train_key + ' learning rate':3},
+                              train_key + ' learning rate':3, train_key + ' accuracy': 4},
                    test_key:{'Iters':0, 'Seconds':1, test_key + ' accuracy':2,
                              test_key + ' loss':3}}
     fields = set()
