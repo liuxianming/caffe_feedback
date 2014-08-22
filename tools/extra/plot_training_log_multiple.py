@@ -3,6 +3,9 @@ import inspect
 import os
 import random
 import sys
+import matplotlib
+# Set the backend of matplotlib
+matplotlib.use('Agg')
 import matplotlib.cm as cmx
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
@@ -76,7 +79,9 @@ def get_field_indecies(x_axis_field, y_axis_field, chart_type):
     return fields[x_axis_field], fields[y_axis_field]
 
 def load_data(data_file, field_idx0, field_idx1):
+    print "Start loading data points"
     data = [[], []]
+    line_count = 0
     with open(data_file, 'r') as f:
         for line in f:
             line = line.strip()
@@ -84,6 +89,8 @@ def load_data(data_file, field_idx0, field_idx1):
                 fields = line.split()
                 data[0].append(float(fields[field_idx0].strip()))
                 data[1].append(float(fields[field_idx1].strip()))
+                line_count = line_count + 1
+    print 'Totally {0} lines read into memory'.format(line_count)
     return data
 
 def random_marker():
@@ -110,8 +117,10 @@ def plot_chart(chart_types, path_to_png, path_to_log_list):
     x_axis_fields = ""
     y_axis_fields = ""
     chart_title = ""
+    print 'Work summary: [number of chart type = {0}] / [number of log files = {1}]'.format(len(chart_types), len(path_to_log_list))
     for chart_type in chart_types:
         for path_to_log in path_to_log_list:
+            print 'Ploting chart from {0}, chart_type = {1}'.format(path_to_log, chart_type)
             os.system('%s %s' % (get_log_parsing_script(), path_to_log))
             data_file = get_data_file(chart_type, path_to_log)
             x_axis_field, y_axis_field = get_field_descriptions(chart_type)
@@ -125,8 +134,9 @@ def plot_chart(chart_types, path_to_png, path_to_log_list):
             color = [random.random(), random.random(), random.random()]
             linewidth = 0.75
             ## If there too many datapoints, do not use marker.
-        ##    use_marker = False
-            use_marker = True
+
+            use_marker = False
+            print 'Use Marker = {0}'.format(use_marker)
             if not use_marker:
                 plt.plot(data[0], data[1], label = y_axis_field, color = color,
                          linewidth = linewidth)
@@ -136,8 +146,10 @@ def plot_chart(chart_types, path_to_png, path_to_log_list):
                 while not ok:
                     try:
                         marker = random_marker()
+                        print 'Plotting...'
                         plt.plot(data[0], data[1], label = y_axis_field, color = color,
                                  marker = marker, linewidth = linewidth)
+                        print 'Plotting complete!'
                         ok = True
                     except:
                         pass
