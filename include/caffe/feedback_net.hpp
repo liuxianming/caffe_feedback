@@ -59,7 +59,8 @@ namespace caffe {
 			   Dtype scaler = Dtype(1.0), Dtype mean = Dtype(100.0));
     void DrawNeron(string dir, int* channel_offsets, string prefix = "",
 			   Dtype scaler = Dtype(1.0), Dtype mean = Dtype(100.0));
-
+    void DrawInputImages(string dir, string prefix = "", 
+			 Dtype scaler = Dtype(1.0), Dtype mean = Dtype(100.0));
     //Member function
     void InitVisualization();
 

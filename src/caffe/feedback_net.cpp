@@ -379,6 +379,36 @@ namespace caffe {
   }
 
   template<typename Dtype>
+  void FeedbackNet<Dtype>::DrawInputImages(string dir, string prefix, Dtype scaler, Dtype mean) {
+    //Normalization:
+    LOG(INFO)<< "Normalizing images...";
+    Blob<Dtype>* _input_images = this->blobs_[0].get();
+    LOG(INFO)<<"Size: "<<_input_images->num() << " " << _input_images->channels()
+	     <<" " << _input_images->height() << " " << _input_images->width();
+    for (int n = 0; n < _input_images->num(); ++n) {
+      for (int c = 0; c < _input_images->channels(); c++) {
+	ImageNormalization<Dtype>(_input_images->mutable_cpu_data()
+				  + _input_images->offset(n, c),
+				  _input_images->offset(0, 1),
+				  mean, scaler);
+      }
+    }
+    //start saving input images
+    for(int n = 0; n < _input_images->num(); ++n) {
+      LOG(INFO)<<"Saving Original Image "<<n;
+      std::ostringstream convert;
+      convert << dir << prefix << n;
+      string filename = convert.str() + ".jpg";
+
+      const int _height = _input_images->height();
+      const int _width = _input_images->width();
+      const int _channel = _input_images->channels();
+      WriteDataToImage<Dtype>(filename, _channel, _height, _width,
+			      _input_images->mutable_cpu_data() + _input_images->offset(n) );
+    }
+  }
+
+  template<typename Dtype>
   void FeedbackNet<Dtype>::DrawVisualization(string dir, string prefix, Dtype scaler, Dtype mean) {
     //Normalization:
     for (int k = 0; k < this->visualization_.size(); ++k) {

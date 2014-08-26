@@ -81,6 +81,9 @@ message VisualizerParameter {
   optional int32 col_idx = 11 [default = -1];
   //The device id (GPU ID) will be used
   optional int32 device_id = 12 [default = 0];
+  //The following two variables are used for visualizing input images
+  optional bool original_output = 13 [default = false];
+  optional string original_store_dir = 14 [default = "/original"];
 }
 
 message SolverParameter {

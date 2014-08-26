@@ -40,6 +40,6 @@ grep ', accuracy = ' $1 | awk '{print $9}' > aux3.txt
 $DIR/extract_seconds.py aux.txt aux4.txt
 
 # Generating
-echo '# Iters Seconds TrainingLoss LearningRate'> $LOG.train
+echo '# Iters Seconds TrainingLoss LearningRate TrainingAccuracy'> $LOG.train
 paste aux0.txt aux4.txt aux1.txt aux2.txt aux3.txt | column -t >> $LOG.train
 rm aux.txt aux0.txt aux1.txt aux2.txt aux3.txt aux4.txt

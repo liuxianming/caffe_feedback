@@ -76,6 +76,14 @@ namespace caffe {
     if(boost::filesystem::create_directories(save_dir)) {
       LOG(INFO)<<"Create saving dir "<<param_.store_dir();
     }
+    //need to store the original input
+    if(param_.original_output()) {
+      LOG(INFO)<<"[Visualizer Job]: Need to visualize the original input images";
+      boost::filesystem::path original_save_dir((param_.original_store_dir()).c_str());
+      if(boost::filesystem::create_directories(original_save_dir)) {
+	LOG(INFO)<<"Create original input image saving dir "<<param_.original_store_dir();
+      }
+    }
     //Start iteration
     for(iter_ = 0; iter_ < param_.max_iter(); ++iter_){
       LOG(INFO)<<"Processing Batch "<<iter_;
@@ -101,6 +109,12 @@ namespace caffe {
       convert << iter_ <<"_";
       string prefix = convert.str();
       net_->DrawVisualization(param_.store_dir(), prefix, 1.0);
+
+      //need to visualize the original input image
+      if (param_.original_output()) {
+	LOG(INFO)<<"Saving original input images to files...";
+	net_->DrawInputImages(param_.original_store_dir(), prefix, 1.0);
+      }
       LOG(INFO)<<"Complete";
     }
   }
