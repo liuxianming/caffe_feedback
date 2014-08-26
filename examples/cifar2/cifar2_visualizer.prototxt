@@ -1,0 +1,9 @@
+visualization_net: "cifar2_full_fb_visualization.prototxt"
+model: "feedback_cifar2_binary_iter_10000"
+max_iter: 100
+store_dir: "./visualization_cifar2_fb_train_fb_ip1/"
+target_layer: "ip1"
+k: 1
+visualization_type: TOP
+original_output: true
+original_store_dir: "./visualization_cifar2_fb_train_fb_ip1/original/"
