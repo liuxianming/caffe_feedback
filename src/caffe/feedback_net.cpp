@@ -325,7 +325,7 @@ namespace caffe {
       }
       _start_top_filter_single->multiply(output_weights);
       */
-      
+
       if (idx == 0) _start_top_filter = _start_top_filter_single;
       else {
 	_start_top_filter->add( * _start_top_filter_single);
@@ -607,8 +607,8 @@ namespace caffe {
       const LayerParameter_LayerType &type = param.type();
 
       if (type == LayerParameter_LayerType_RELUPLUS) {
-	endLayerIdx = i;
-	break;
+        endLayerIdx = i;
+        break;
       }
     }
 
@@ -627,23 +627,22 @@ namespace caffe {
     if (channel == -1 && offset == -1) {
       //get the largest k output category for each image
       for (int i = 0; i < k; ++i) {
-	int *channel_offset = new int[input_blob->num()];
-	k_channels.push_back(channel_offset);
-	int *in_channel_offset = new int[input_blob->num()];
-	k_offsets.push_back(in_channel_offset);
+        int *channel_offset = new int[input_blob->num()];
+        k_channels.push_back(channel_offset);
+        int *in_channel_offset = new int[input_blob->num()];
+        k_offsets.push_back(in_channel_offset);
       }
 
       SearchTopKNeurons(startLayerIdx, k, k_channels, k_offsets);
-    }
-    else {
+    } else {
       //Using the selected neuron
       //LOG(INFO)<<channel << ":"<<offset<<" * "<<input_blob->num();
       int *channels = new int[input_blob->num()];
       int *offsets = new int[input_blob->num()];
 
       for (int n = 0; n < input_blob->num(); ++n) {
-	channels[n] = channel;
-	offsets[n] = offset;
+        channels[n] = channel;
+        offsets[n] = offset;
       }
 
       k_channels.push_back(channels);
