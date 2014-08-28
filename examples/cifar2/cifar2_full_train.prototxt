@@ -1,11 +1,11 @@
-name: "CIFAR10_full_train"
+name: "CIFAR2_full_train"
 layers {
   name: "cifar"
   type: DATA
   top: "data"
   top: "label"
   data_param {
-    source: "cifar10-leveldb/cifar-train-leveldb"
+    source: "cifar2-leveldb/cifar-train-leveldb"
     mean_file: "mean.binaryproto"
     batch_size: 100
   }

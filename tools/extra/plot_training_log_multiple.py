@@ -117,6 +117,7 @@ def plot_chart(chart_types, path_to_png, path_to_log_list):
     x_axis_fields = ""
     y_axis_fields = ""
     chart_title = ""
+    legends = ""
     print 'Work summary: [number of chart type = {0}] / [number of log files = {1}]'.format(len(chart_types), len(path_to_log_list))
     for chart_type in chart_types:
         for path_to_log in path_to_log_list:
@@ -153,7 +154,10 @@ def plot_chart(chart_types, path_to_png, path_to_log_list):
                         ok = True
                     except:
                         pass
-        
+            if not legends:
+                legends = y_axis_field + " " + path_to_log
+            else: 
+                legends = legends + " || " + y_axis_field + " " + path_to_log
         loc = get_legend_loc(chart_type)
 
         chart_title = chart_title + " || " + get_chart_type_description(chart_type)
@@ -161,7 +165,7 @@ def plot_chart(chart_types, path_to_png, path_to_log_list):
             y_axis_fields = y_axis_field
         else:
             y_axis_fields = y_axis_fields + " || " + y_axis_field
-    plt.legend(y_axis_fields.split(" || "), loc, ncol = 1) # ajust ncol to fit the space
+    plt.legend(legends.split(" || "), loc, ncol = 1) # ajust ncol to fit the space
     ##plt.title(chart_title)
     plt.xlabel(x_axis_fields)
     plt.ylabel(y_axis_fields)  

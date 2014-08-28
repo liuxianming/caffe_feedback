@@ -310,7 +310,11 @@ namespace caffe {
 
       /*
        * Using the output values as weights for each template
+       * From Yi: using the weights to initialize the topFilter is wrong
+       * Remove these code
+       * ToDo: Is there any better way to generate topfilter for multiple outputs?
        */
+      /*
       //Find weight
       Blob<Dtype> *_filter_output = (this->top_vecs_[startLayerIdx_])[0];
       Dtype *output_weights = new Dtype[_filter_output->num()];
@@ -320,7 +324,8 @@ namespace caffe {
     			  + _filter_output->offset(i, startChannelIdxs[idx][i]) + startOffsets[idx][i]);
       }
       _start_top_filter_single->multiply(output_weights);
-
+      */
+      
       if (idx == 0) _start_top_filter = _start_top_filter_single;
       else {
 	_start_top_filter->add( * _start_top_filter_single);

@@ -1,11 +1,11 @@
-name: "CIFAR10_full_test"
+name: "CIFAR2_full_test"
 layers {
   name: "cifar"
   type: DATA
   top: "data"
   top: "label"
   data_param {
-    source: "cifar10-leveldb/cifar-test-leveldb"
+    source: "cifar2-leveldb/cifar-test-leveldb"
     mean_file: "mean.binaryproto"
     batch_size: 100
   }
