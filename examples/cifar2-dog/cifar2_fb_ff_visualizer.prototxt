@@ -7,3 +7,5 @@ visualization_type: TOP
 target_layer: "ip1"
 k: 1
 visualize_with_feedback: false
+original_output: true
+original_store_dir: "./cifar2_fb_ff/original/" 
