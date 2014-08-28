@@ -81,7 +81,7 @@ namespace caffe {
       LOG(INFO)<<"[Visualizer Job]: Need to visualize the original input images";
       boost::filesystem::path original_save_dir((param_.original_store_dir()).c_str());
       if(boost::filesystem::create_directories(original_save_dir)) {
-	LOG(INFO)<<"Create original input image saving dir "<<param_.original_store_dir();
+        LOG(INFO)<<"Create original input image saving dir "<<param_.original_store_dir();
       }
     }
     //Start iteration
@@ -89,13 +89,14 @@ namespace caffe {
       LOG(INFO)<<"Processing Batch "<<iter_;
       //Perform forward()
       if(param_.visualization_type() == VisualizerParameter_VisualizationType_TOP){
-        if(param_.k() > 1) {
+        if(param_.visualize_with_feedback()) {
+          LOG(INFO) << "visualize with feedback";
+          const vector<Blob<Dtype>*>& result = net_->FeedbackForwardPrefilled();
+        } else {
+          LOG(INFO) << "visualize with feedforward";
           const vector<Blob<Dtype>*>& result = net_->ForwardPrefilled();
         }
-        else if (param_.k() == 1) {
-          const vector<Blob<Dtype>*>& result = net_->FeedbackForwardPrefilled();
-        }
-	LOG(INFO)<<"Forwarding function complete";
+        LOG(INFO)<<"Forwarding function complete";
         //Start visualization
         net_->VisualizeTopKNeurons(param_.target_layer(), param_.k(), false);
       }
@@ -112,8 +113,8 @@ namespace caffe {
 
       //need to visualize the original input image
       if (param_.original_output()) {
-	LOG(INFO)<<"Saving original input images to files...";
-	net_->DrawInputImages(param_.original_store_dir(), prefix, 1.0);
+        LOG(INFO)<<"Saving original input images to files...";
+        net_->DrawInputImages(param_.original_store_dir(), prefix, 1.0);
       }
       LOG(INFO)<<"Complete";
     }
