@@ -136,7 +136,7 @@ def plot_chart(chart_types, path_to_png, path_to_log_list):
             linewidth = 0.75
             ## If there too many datapoints, do not use marker.
 
-            use_marker = True
+            use_marker = False
             print 'Use Marker = {0}'.format(use_marker)
             if not use_marker:
                 plt.plot(data[0], data[1], label = y_axis_field, color = color,

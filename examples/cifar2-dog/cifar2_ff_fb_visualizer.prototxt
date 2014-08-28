@@ -1,0 +1,11 @@
+visualization_net: "cifar2_fb_visualization.prototxt"
+model: "cifar2_ff_iter_3000"
+max_iter: 20
+store_dir: "./cifar2_ff_fb/"
+visualizer_mode: GPU
+visualization_type: TOP
+target_layer: "ip1"
+k: 1
+visualize_with_feedback: true 
+original_output: true
+original_store_dir: "./cifar2_ff_fb/original/" 
