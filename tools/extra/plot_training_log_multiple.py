@@ -156,11 +156,13 @@ def plot_chart(chart_types, path_to_png, path_to_log_list):
                         pass
             if not legends:
                 legends = y_axis_field + " " + path_to_log
-            else: 
+            else:
                 legends = legends + " || " + y_axis_field + " " + path_to_log
         loc = get_legend_loc(chart_type)
-
-        chart_title = chart_title + " || " + get_chart_type_description(chart_type)
+        if not chart_title:
+          chart_title = get_chart_type_description(chart_type)
+        else:
+          chart_title = chart_title + " || " + get_chart_type_description(chart_type)
         if not y_axis_fields:
             y_axis_fields = y_axis_field
         else:
@@ -184,6 +186,7 @@ Usage:
 Notes:
     1. Supporting multiple logs.
     2. Log file name must end with the lower-cased "%s".
+    3. Supporting multiple charts.
 Supported chart types:""" % (len(get_supported_chart_types()) - 1,
                              get_log_file_suffix())
     supported_chart_types = get_supported_chart_types()
