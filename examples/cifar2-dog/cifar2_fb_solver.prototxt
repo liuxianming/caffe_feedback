@@ -14,5 +14,5 @@ momentum: 0.9
 weight_decay: 0.004
 # snapshot: 5000
 snapshot_prefix: "cifar2_fb"
-device_id: 1
+device_id: 0
 top_k: 1
