@@ -84,6 +84,8 @@ message VisualizerParameter {
   //The following two variables are used for visualizing input images
   optional bool original_output = 13 [default = false];
   optional string original_store_dir = 14 [default = "/original"];
+  // Whether call feedback during visualization
+  optional bool visualize_with_feedback = 15 [default = false];
 }
 
 message SolverParameter {
