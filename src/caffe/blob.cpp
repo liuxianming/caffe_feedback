@@ -218,6 +218,13 @@ namespace caffe {
   }
 
   template<typename Dtype>
+  void Blob<Dtype>::add(const Dtype val) {
+    Dtype* source_data_ptr = this->mutable_cpu_data();
+    for(int n =0; n<this->count(); ++n) 
+      source_data_ptr[n] += val;
+  }
+
+  template<typename Dtype>
   void Blob<Dtype>::multiply(const Dtype* s){
     for (int n = 0; n<this->num(); ++n){
       Dtype* data_ptr = this->mutable_cpu_data() + this->offset(n);
