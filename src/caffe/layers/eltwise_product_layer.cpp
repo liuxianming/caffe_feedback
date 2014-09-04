@@ -54,6 +54,7 @@ void EltwiseProductLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 
       caffe_div(count, top_data, bottom_data, bottom_diff);
 
+      /*
       //Deal with the condition that the bottom_data is 0
       //This will happen during the feedback
       //The solution is: make bottom_diff = 0, that is close the neurons
@@ -63,7 +64,7 @@ void EltwiseProductLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 	  bottom_diff[n] = 0;
 	}
       }
-
+      */
       caffe_mul(count, bottom_diff, top_diff, bottom_diff);
     }
   }
