@@ -1,0 +1,7 @@
+visualization_net: "alexnet_visualization_feedback.prototxt"
+model: "caffe_alexnet_model"
+max_iter: 30
+store_dir: "./visualization_imagenet_conv3_neurons/"
+target_layer: "conv3"
+k: 1
+visualization_type: TOP

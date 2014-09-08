@@ -1,0 +1,7 @@
+visualization_net: "alexnet_feedback_val.prototxt"
+model: "caffe_alexnet_model"
+max_iter: 1
+store_dir: "./visualization_imagenet_train_small_conv5/"
+target_layer: "conv5"
+k: 1
+visualization_type: TOP
