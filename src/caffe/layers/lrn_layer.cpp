@@ -99,7 +99,9 @@ namespace caffe {
       LOG(FATAL) << "Unknown normalization region.";
     }
     //Setting up the eq_filter
-    this->eq_filter_ = new Blob<Dtype>(bottom[0]->num(), 1, 1, bottom[0]->channels() * bottom[0]->height() * bottom[0]->width());
+    this->eq_filter_ = new Blob<Dtype>(bottom[0]->num(), 1, 1, 
+				       bottom[0]->channels() * bottom[0]->height() * bottom[0]->width()
+				       );
   }
 
   template <typename Dtype>
@@ -119,8 +121,8 @@ namespace caffe {
   }
 
   template <typename Dtype>
-  Dtype LRNLayer<Dtype>::CrossChannelForward_cpu(
-						 const vector<Blob<Dtype>*>& bottom, vector<Blob<Dtype>*>* top) {
+  Dtype LRNLayer<Dtype>::CrossChannelForward_cpu(const vector<Blob<Dtype>*>& bottom, 
+						 vector<Blob<Dtype>*>* top) {
     const Dtype* bottom_data = bottom[0]->cpu_data();
     Dtype* top_data = (*top)[0]->mutable_cpu_data();
     Dtype* scale_data = scale_.mutable_cpu_data();

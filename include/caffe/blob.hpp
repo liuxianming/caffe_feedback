@@ -86,6 +86,7 @@ class Blob {
   void multiply(const Dtype s);
   void multiply(const Dtype* s);
   void add(const Blob<Dtype>& b);
+  void add(const Dtype b);
 
  protected:
   /*

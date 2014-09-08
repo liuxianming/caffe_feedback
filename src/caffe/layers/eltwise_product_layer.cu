@@ -31,6 +31,16 @@ void EltwiseProductLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
       const Dtype* bottom_data = (*bottom)[i]->gpu_data();
       Dtype* bottom_diff = (*bottom)[i]->mutable_gpu_diff();
       caffe_gpu_div(count, top_data, bottom_data, bottom_diff);
+      /*
+      //deal with the situation when bottom_data = 0
+      Dtype* bottom_diff_cpu = (*bottom)[i]->mutable_cpu_diff();
+      for(int n = 0; n<(*bottom)[i]->count(); ++n) {
+	if (bottom_diff_cpu[n] != bottom_diff_cpu[n]){
+	  bottom_diff_cpu[n] = 0;
+	}
+      }
+      bottom_diff = (*bottom)[i]->mutable_gpu_diff();
+      */
       caffe_gpu_mul(count, bottom_diff, top_diff, bottom_diff);
     }
   }

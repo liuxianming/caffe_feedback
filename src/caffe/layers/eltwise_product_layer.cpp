@@ -49,8 +49,22 @@ void EltwiseProductLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     const Dtype* top_diff = top[0]->cpu_diff();
     for (int i = 0; i < bottom->size(); ++i) {
       const Dtype* bottom_data = (*bottom)[i]->cpu_data();
+      int bottom_data_size = (*bottom)[i]->count();
       Dtype* bottom_diff = (*bottom)[i]->mutable_cpu_diff();
+
       caffe_div(count, top_data, bottom_data, bottom_diff);
+
+      /*
+      //Deal with the condition that the bottom_data is 0
+      //This will happen during the feedback
+      //The solution is: make bottom_diff = 0, that is close the neurons
+      for(int n = 0; n < bottom_data_size; ++n) {
+	if (bottom_diff[n] != bottom_diff[n]) {
+	  //The case of NaN
+	  bottom_diff[n] = 0;
+	}
+      }
+      */
       caffe_mul(count, bottom_diff, top_diff, bottom_diff);
     }
   }
