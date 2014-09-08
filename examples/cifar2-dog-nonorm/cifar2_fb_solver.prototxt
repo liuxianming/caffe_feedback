@@ -4,7 +4,7 @@ test_net: "cifar2_fb_test.prototxt"
 test_iter: 20
 # report testing error every 100 iterations
 test_interval: 100
-base_lr: 0.01
+base_lr: 0.001
 lr_policy: "step"
 gamma: 0.1
 stepsize: 3000
