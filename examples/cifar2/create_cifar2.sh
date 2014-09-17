@@ -7,8 +7,8 @@ TOOLS=../../build/tools
 
 echo "Creating leveldb..."
 
-rm -rf cifar10-leveldb
-mkdir cifar10-leveldb
+rm -rf cifar2-leveldb
+mkdir cifar2-leveldb
 
 $EXAMPLES/convert_cifar_data.bin $DATA ./cifar2-leveldb
 
