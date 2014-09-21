@@ -115,7 +115,7 @@ INCLUDE_DIRS += ./src ./include $(CUDA_INCLUDE_DIR)
 LIBRARY_DIRS += $(CUDA_LIB_DIR)
 LIBRARIES := cudart cublas curand \
 	pthread \
-	glog protobuf leveldb snappy \
+	glog gflags protobuf leveldb snappy \
 	boost_system \
 	boost_filesystem \
 	hdf5_hl hdf5 \
