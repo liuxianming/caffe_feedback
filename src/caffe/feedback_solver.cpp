@@ -64,7 +64,6 @@ void FeedbackSolver<Dtype>::Solve(const char* resume_file) {
   PreSolve();
 
   iter_ = 0;
-  resume_file = NULL;
   if (resume_file ) {
     LOG(INFO) << "Restoring previous solver status from " << resume_file;
     Restore(resume_file);
@@ -87,7 +86,7 @@ void FeedbackSolver<Dtype>::Solve(const char* resume_file) {
   vector<Blob<Dtype>*> bottom_vec;
   while (iter_++ < param_.max_iter()) {
     Dtype loss = net_->FeedbackForwardBackward(bottom_vec, param_.top_k());
-    ComputeUpdateValue();
+        ComputeUpdateValue();
     net_->Update();
     Blob<Dtype>* accuracy_blob = (net_->output_blobs()).back();
     accuracy += *(accuracy_blob->cpu_data());
