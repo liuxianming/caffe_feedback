@@ -83,6 +83,8 @@ namespace caffe {
 
   template<typename Dtype>
   void WriteDataToImage(string filename, const int channel, const int height, const int width, Dtype* data);
+  //This function is added to write data to image in the format of void* (unsigned char)
+  void WriteDataToImage(string filename, const int channel, const int height, const int width, const char* data);
 
   template<typename Dtype>
   void writeDataToTxt(string filename, Blob<Dtype>* data);
