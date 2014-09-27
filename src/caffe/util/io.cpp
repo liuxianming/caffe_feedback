@@ -221,6 +221,30 @@ namespace caffe {
     cv::imwrite(filename, *img);
   }
 
+  void WriteDataToImage(string filename, const int channel, const int height, const int width, const char* data) {
+    //The pixels stored in data is organized as: channel, height, and width
+    //In opencv::Mat, the data is stored as col (width)->row(height)->channel
+    //So if the data is 3-channel, need to re-organized the data
+    cv::Mat* img;
+    if (channel == 3){
+      char* imgdata = new char[channel * width * height];
+      int data_offset = height * width;
+      for(int r = 0; r<height; r++){
+        for(int c = 0; c<width; c++){
+          for(int i = 0; i<3; i++){
+            int pixel_offset = r * width + c;
+            imgdata[pixel_offset * 3 + i] = data[pixel_offset + data_offset * i];
+          }
+        }
+      }
+      img = new cv::Mat(height, width, CV_8UC3, (void*) imgdata);
+    }
+    else if( channel == 1){
+      img = (new cv::Mat(height, width, CV_8U, (void*) data));
+    }
+    cv::imwrite(filename, *img);
+  }
+
   template<>
   void ImageNormalization<float>(float* imgData, int len, float mean, float scaler){
     float max = (float)0.;
